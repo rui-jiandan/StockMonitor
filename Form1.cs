@@ -8,23 +8,21 @@ using HtmlAgilityPack;
 using Newtonsoft.Json;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using StockMonitor.Model;
 using HtmlDocument = HtmlAgilityPack.HtmlDocument;
 
 namespace StockMonitor
 {
     public partial class Form1 : Form
     {
-        private Dictionary<string, IWebDriver> drivers = new Dictionary<string, IWebDriver>();
-        private string stockBaseURL = string.Empty;
-        private string lableFormat = string.Empty;
-        private Dictionary<string, string> parsingRules = new Dictionary<string, string>();
         private List<StockInfo> stockInfoList = new List<StockInfo>();
         private Timer timer;
         private string configFilePath;
         private string stocksFilePath;
-        private FileSystemWatcher configWatcher;
         private FileSystemWatcher stocksWatcher;
         private List<string> currentStockCodes = new List<string>();
+        private IScraper scraper;
+        private Config config;
 
         public Form1()
         {
@@ -48,17 +46,9 @@ namespace StockMonitor
 
             // 创建定时器，每5秒更新一次
             timer = new Timer();
-            timer.Interval = parsingRules.ContainsKey("RefreshInterval") ? int.Parse(parsingRules["RefreshInterval"]) : 5000;
+            timer.Interval = config.RefreshInterval;
             timer.Tick += Timer_Tick;
             timer.Start();
-
-            // 监听配置文件的变化
-            configWatcher = new FileSystemWatcher();
-            configWatcher.Path = appPath;
-            configWatcher.Filter = Path.GetFileName(configFilePath);
-            configWatcher.NotifyFilter = NotifyFilters.LastWrite;
-            configWatcher.Changed += ConfigWatcher_Changed;
-            configWatcher.EnableRaisingEvents = true;
 
             stocksWatcher = new FileSystemWatcher();
             stocksWatcher.Path = appPath;
@@ -70,115 +60,34 @@ namespace StockMonitor
 
 
 
-        private void InitializeWebDrivers()
+        private async void InitializeWebDrivers()
         {
-            if (string.IsNullOrEmpty(stockBaseURL)) return;
-            var oldCodeDrivers = drivers.Keys;
+            if (string.IsNullOrEmpty(config.StockBaseURL)) return;
+            if(!scraper.Initialize)
+            {
+                await scraper.InitializeBrowser();
+            }
+            var oldCodeDrivers = scraper.GetCurrentCodes();
             foreach (var code in oldCodeDrivers)
             {
                 if (!currentStockCodes.Contains(code))
                 {
-                    drivers[code].Quit();
-                    drivers.Remove(code);
+                    scraper.RemoveUrl(code);
                 }
             }
 
-            // 设置 ChromeDriver 的路径
-            string chromeDriverPath = Path.Combine(Application.StartupPath, "chrome", "chromedriver.exe");
-
             foreach (var code in currentStockCodes)
             {
-                if (drivers.ContainsKey(code))
-                {
-                    continue;
-                }
-                string url = string.Format(stockBaseURL, code);
-                var service = ChromeDriverService.CreateDefaultService(chromeDriverPath);
-                service.HideCommandPromptWindow = true;
-                ChromeOptions options = new ChromeOptions();
-                options.AddArgument("--headless"); // 无头模式
-                options.AddArgument("--disable-gpu");
-                options.AddArgument("--no-sandbox");
-                options.AddArgument("--disable-dev-shm-usage");
-                options.AddArgument("blink-settings=imagesEnabled=false");
-                options.AddArgument("--log-level=3"); // 设置日志级别为ERROR
-                options.AddArgument("--silent"); // 静默模式，减少日志输出
-                IWebDriver driver = new ChromeDriver(service, options);
-                driver.Navigate().GoToUrl(url);
-
-                drivers[code] = driver;
+                string url = string.Format(config.StockBaseURL, code);
+                scraper.LoadUrl(code, url);
             }
         }
 
         private async void Timer_Tick(object sender, EventArgs e)
         {
             stockInfoList.Clear();
-
-            foreach (var kvp in drivers)
-            {
-                string code = kvp.Key;
-                IWebDriver driver = kvp.Value;
-
-                try
-                {
-                    driver.Navigate().Refresh();
-
-                    string pageSource = driver.PageSource;
-                    HtmlDocument document = new HtmlDocument();
-                    document.LoadHtml(pageSource);
-
-                    // 提取股票名称
-                    var nameNode = document.DocumentNode.SelectSingleNode(parsingRules["Name"]);
-                    string stockName = nameNode?.InnerText ?? "错误代码";
-
-                    // 提取实时价格
-                    var priceNode = document.DocumentNode.SelectSingleNode(parsingRules["Price"]);
-                    string stockPrice = priceNode?.InnerText ?? "N/A";
-
-                    // 提取涨跌值
-                    var changeNode = document.DocumentNode.SelectSingleNode(parsingRules["Change"]);
-                    string stockChange = changeNode?.InnerText ?? "N/A";
-
-                    // 提取百分比
-                    var rateNode = document.DocumentNode.SelectSingleNode(parsingRules["ChangeRate"]);
-                    string changeRate = rateNode?.InnerText ?? "N/A";
-
-                    // 判断涨跌
-                    Color textColor = Color.White;
-                    if(decimal.TryParse(stockChange,out var pricechange))
-                    {
-                        if (pricechange > 0)
-                        {
-                            textColor = Color.Red;
-                        }
-                        else if(pricechange<0)
-                        {
-                            textColor = Color.Green;
-                        }
-                    }
-
-                    // 添加到股票信息列表
-                    stockInfoList.Add(new StockInfo
-                    {
-                        Name = stockName,
-                        Price = stockPrice,
-                        Change = stockChange,
-                        Color = textColor,
-                        ChangeRate = changeRate
-                    });
-                }
-                catch (Exception ex)
-                {
-                    stockInfoList.Add(new StockInfo
-                    {
-                        Name = code,
-                        Price = "N/A",
-                        Change = ex.Message,
-                        Color = Color.Red
-                    });
-                }
-            }
-
+            var newstockInfoList =await scraper.ScrapeAllAsync();
+            stockInfoList.AddRange(newstockInfoList);
             // 刷新面板
             panel1.Invalidate();
         }
@@ -196,7 +105,7 @@ namespace StockMonitor
                     {
                         using (Font font = new Font("Arial", 10, FontStyle.Bold))
                         {
-                            string stockInfo =string.Format(lableFormat, info.Name, info.Price,info.Change,info.ChangeRate);
+                            string stockInfo =string.Format(config.LableFormat, info.Name, info.Price,info.Change,info.ChangeRate);
                             
                             SizeF size = g.MeasureString(stockInfo, font);
                             g.DrawString(stockInfo, font, new SolidBrush(info.Color), 0, y);
@@ -214,20 +123,11 @@ namespace StockMonitor
             if (File.Exists(configFilePath))
             {
                 string json = File.ReadAllText(configFilePath);
-                dynamic config = JsonConvert.DeserializeObject(json);
+                config = JsonConvert.DeserializeObject<Config>(json);
+                if (string.IsNullOrEmpty(config.ChromiumPath))
+                    config.ChromiumPath = Path.Combine(Application.StartupPath, "chromium", "chrome.exe");
 
-                stockBaseURL = config.StockBaseURL;
-
-                lableFormat = config.LableFormat;
-
-                parsingRules = new Dictionary<string, string>
-                {
-                    { "Name", config.ParsingRules.Name.ToString() },
-                    { "Price", config.ParsingRules.Price.ToString() },
-                    { "Change", config.ParsingRules.Change.ToString() },
-                    { "ChangeRate", config.ParsingRules.ChangeRate.ToString() },
-                    { "RefreshInterval", config.RefreshInterval.ToString() }
-                };
+                scraper = new PuppeteerSharpScrape(config, Path.Combine(Application.StartupPath, "chromium", "chrome.exe"));
             }
         }
 
@@ -247,18 +147,6 @@ namespace StockMonitor
 
             // 初始化WebDriver实例
             InitializeWebDrivers();
-        }
-
-        private void SaveConfig()
-        {
-            var config = new
-            {
-                StockBaseURL = stockBaseURL,
-                ParsingRules = parsingRules,
-                RefreshInterval = parsingRules["RefreshInterval"]
-            };
-
-            File.WriteAllText(configFilePath, JsonConvert.SerializeObject(config, Formatting.Indented));
         }
 
         private void SaveStocks()
@@ -285,11 +173,7 @@ namespace StockMonitor
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             // 关闭所有WebDriver实例
-            foreach (var driver in drivers.Values)
-            {
-                driver.Quit();
-                driver.Dispose();
-            }
+            scraper.ReleaseBrowser();
             notifyIcon.Visible = false;
             notifyIcon.Dispose();
         }
@@ -302,16 +186,6 @@ namespace StockMonitor
         private void buttonClose_Click(object sender, EventArgs e)
         {
             this.Close();
-        }
-
-        private class StockInfo
-        {
-            public string Name { get; set; }
-            public string Price { get; set; }
-            public string Change { get; set; }
-
-            public string ChangeRate { get; set; }
-            public Color Color { get; set; }
         }
 
         private void InitializeNotifyIcon()

@@ -7,5 +7,6 @@
     "Price": "//div[@class='zxj']",
     "Change": "//div[@class='zd']/span[1]",
     "ChangeRate": "//div[@class='zd']/span[2]"
-  }
+  },
+  "ChromiumPtah": ""
 }
