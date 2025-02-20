@@ -1,6 +1,6 @@
 {
   "StockBaseURL": "https://quote.eastmoney.com/{0}.html",
-  "RefreshInterval": 1000,
+  "RefreshInterval": 800,
   "LableFormat": "{0} {1} {2} {3}\n",
   "ParsingRules": {
     "Name": "//span[contains(@class,'quote_title_name')]",

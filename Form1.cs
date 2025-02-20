@@ -16,13 +16,13 @@ namespace StockMonitor
     public partial class Form1 : Form
     {
         private List<StockInfo> stockInfoList = new List<StockInfo>();
-        private Timer timer;
         private string configFilePath;
         private string stocksFilePath;
         private FileSystemWatcher stocksWatcher;
         private List<string> currentStockCodes = new List<string>();
         private IScraper scraper;
         private Config config;
+        private bool isRunning = true;
 
         public Form1()
         {
@@ -44,11 +44,8 @@ namespace StockMonitor
             LoadConfig();
             LoadStocks();
 
-            // 创建定时器，每5秒更新一次
-            timer = new Timer();
-            timer.Interval = config.RefreshInterval;
-            timer.Tick += Timer_Tick;
-            timer.Start();
+            // 启动单线程定时任务
+            StartSingleThreadedTimer();
 
             stocksWatcher = new FileSystemWatcher();
             stocksWatcher.Path = appPath;
@@ -58,12 +55,28 @@ namespace StockMonitor
             stocksWatcher.EnableRaisingEvents = true;
         }
 
+        private async void StartSingleThreadedTimer()
+        {
+            while (isRunning)
+            {
+                await Timer_Tick();
+                await Task.Delay(config.RefreshInterval);
+            }
+        }
 
+        private async Task Timer_Tick()
+        {
+            stockInfoList.Clear();
+            var newstockInfoList = await scraper.ScrapeAllAsync();
+            stockInfoList.AddRange(newstockInfoList);
+            // 刷新面板
+            panel1.Invalidate();
+        }
 
         private async void InitializeWebDrivers()
         {
             if (string.IsNullOrEmpty(config.StockBaseURL)) return;
-            if(!scraper.Initialize)
+            if (!scraper.Initialize)
             {
                 await scraper.InitializeBrowser();
             }
@@ -83,15 +96,6 @@ namespace StockMonitor
             }
         }
 
-        private async void Timer_Tick(object sender, EventArgs e)
-        {
-            stockInfoList.Clear();
-            var newstockInfoList =await scraper.ScrapeAllAsync();
-            stockInfoList.AddRange(newstockInfoList);
-            // 刷新面板
-            panel1.Invalidate();
-        }
-
         private void panel1_Paint(object sender, PaintEventArgs e)
         {
             using (Bitmap bitmap = new Bitmap(panel1.Width, panel1.Height))
@@ -105,8 +109,8 @@ namespace StockMonitor
                     {
                         using (Font font = new Font("Arial", 10, FontStyle.Bold))
                         {
-                            string stockInfo =string.Format(config.LableFormat, info.Name, info.Price,info.Change,info.ChangeRate);
-                            
+                            string stockInfo = string.Format(config.LableFormat, info.Name, info.Price, info.Change, info.ChangeRate);
+
                             SizeF size = g.MeasureString(stockInfo, font);
                             g.DrawString(stockInfo, font, new SolidBrush(info.Color), 0, y);
                             y += (int)size.Height;
@@ -173,6 +177,7 @@ namespace StockMonitor
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             // 关闭所有WebDriver实例
+            isRunning = false;
             scraper.ReleaseBrowser();
             notifyIcon.Visible = false;
             notifyIcon.Dispose();
