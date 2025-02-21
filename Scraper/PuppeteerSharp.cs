@@ -34,7 +34,6 @@ namespace StockMonitor
 
         public async Task  InitializeBrowser()
         {
-            //await new BrowserFetcher().DownloadAsync();
             browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
                 Headless=true,
@@ -60,10 +59,8 @@ namespace StockMonitor
 
         public async Task ReleaseBrowser()
         {
-            if (browser != null)
-            {
-                await browser.CloseAsync();
-            }
+            isInitialize = false;
+            await browser?.CloseAsync();
         }
 
         public async Task RemoveUrl(string code)
@@ -96,6 +93,22 @@ namespace StockMonitor
 
         }
 
+        public async Task ReloadURL(IEnumerable<string> codes)
+        {
+            if (codes != null && codes.Any())
+            {
+                foreach (var code in codes)
+                {
+                    if (keyValuePairs.ContainsKey(code))
+                    {
+                        //刷新网页
+                        var page=keyValuePairs[code];
+                        await page?.ReloadAsync();
+                    }
+                }
+            }
+        }
+
 
         private StockInfo GetStockInfo(string html)
         {
@@ -121,5 +134,6 @@ namespace StockMonitor
         }
 
 
+        
     }
 }

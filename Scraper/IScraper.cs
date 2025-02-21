@@ -47,5 +47,13 @@ namespace StockMonitor
         /// </summary>
         /// <returns></returns>
         IEnumerable<string> GetCurrentCodes();
+
+        /// <summary>
+        /// 重新加载指定股票信息
+        /// </summary>
+        /// <param name="codes"></param>
+        /// <returns></returns>
+        Task ReloadURL(IEnumerable<string> codes);
+
     }
 }
