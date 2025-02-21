@@ -53,14 +53,26 @@ namespace StockMonitor
             stocksWatcher.NotifyFilter = NotifyFilters.LastWrite;
             stocksWatcher.Changed += StocksWatcher_Changed;
             stocksWatcher.EnableRaisingEvents = true;
+            Logger.LogDebug("启动");
         }
 
         private async void StartSingleThreadedTimer()
         {
+            Logger.LogDebug("开始抓取");
             while (isRunning)
             {
-                await Timer_Tick();
-                await Task.Delay(config.RefreshInterval);
+                try
+                {
+                    await Timer_Tick();
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError("抓取出错", ex);
+                }
+                finally
+                {
+                    await Task.Delay(config.RefreshInterval);
+                }
             }
         }
 
@@ -79,6 +91,7 @@ namespace StockMonitor
             if (!scraper.Initialize)
             {
                 await scraper.InitializeBrowser();
+                Logger.LogDebug("抓取成功");
             }
             var oldCodeDrivers = scraper.GetCurrentCodes();
             foreach (var code in oldCodeDrivers)
@@ -165,17 +178,18 @@ namespace StockMonitor
 
         private void StocksWatcher_Changed(object sender, FileSystemEventArgs e)
         {
+            Logger.LogDebug("配置刷新");
             LoadStocks();
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            LoadConfig();
-            LoadStocks();
+
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            Logger.LogDebug("关闭");
             // 关闭所有WebDriver实例
             isRunning = false;
             scraper.ReleaseBrowser();
