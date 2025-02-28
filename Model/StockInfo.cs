@@ -9,8 +9,9 @@ namespace StockMonitor.Model
 {
     public class StockInfo
     {
-        public StockInfo(string name,string price,string change,string rate) 
+        public StockInfo(string code, string name,string price,string change,string rate) 
         {
+            Code = code;
             Name = name;
             Price = price;
             Change = change;
@@ -28,25 +29,31 @@ namespace StockMonitor.Model
                 }
             }
         }
+
+        /// <summary>
+        /// 股票代码
+        /// </summary>
+        public string Code { get; }
+
         /// <summary>
         /// 股票名称
         /// </summary>
-        public string Name { get; set; }
+        public string Name { get; }
         /// <summary>
         /// 股票价格
         /// </summary>
-        public string Price { get; set; }
+        public string Price { get; }
         /// <summary>
         /// 股票变化价格
         /// </summary>
-        public string Change { get; set; }
+        public string Change { get; }
         /// <summary>
         /// 股票变化率
         /// </summary>
-        public string ChangeRate { get; set; }
+        public string ChangeRate { get;  }
         /// <summary>
         /// 股票颜色
         /// </summary>
-        public Color Color { get; set; }
+        public Color Color { get;}
     }
 }

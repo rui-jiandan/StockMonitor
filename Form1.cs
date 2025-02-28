@@ -80,6 +80,7 @@ namespace StockMonitor
 
         private async Task Timer_Tick()
         {
+            if (!scraper.Initialize) return;
             stockInfoList.Clear();
             var newstockInfoList = await scraper.ScrapeAllAsync();
             stockInfoList.AddRange(newstockInfoList);
@@ -124,7 +125,7 @@ namespace StockMonitor
                     {
                         using (Font font = new Font("Arial", 10, FontStyle.Bold))
                         {
-                            string stockInfo = string.Format(config.LableFormat, info.Name, info.Price, info.Change, info.ChangeRate);
+                            string stockInfo = string.Format(config.LableFormat,info.Code, info.Name, info.Price, info.Change, info.ChangeRate);
 
                             SizeF size = g.MeasureString(stockInfo, font);
                             g.DrawString(stockInfo, font, new SolidBrush(info.Color), 0, y);

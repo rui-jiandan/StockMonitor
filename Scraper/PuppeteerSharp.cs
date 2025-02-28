@@ -89,7 +89,8 @@ namespace StockMonitor
                 return null;
             }
             var html =await keyValuePairs[code].GetContentAsync();
-           return GetStockInfo(html);
+            var r = GetStockInfo(html,code);
+            return r;
 
         }
 
@@ -110,7 +111,7 @@ namespace StockMonitor
         }
 
 
-        private StockInfo GetStockInfo(string html)
+        private StockInfo GetStockInfo(string html,string code)
         {
             HtmlDocument document = new HtmlDocument();
             document.LoadHtml(html);
@@ -130,7 +131,7 @@ namespace StockMonitor
             var rateNode = document.DocumentNode.SelectSingleNode(config.ParsingRules.ChangeRate);
             string changeRate = rateNode?.InnerText ?? "N/A";
 
-            return new StockInfo(stockName, stockPrice, stockChange, changeRate);
+            return new StockInfo(code,stockName, stockPrice, stockChange, changeRate);
         }
 
 

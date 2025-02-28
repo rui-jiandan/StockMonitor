@@ -1,12 +1,12 @@
 {
   "StockBaseURL": "https://quote.eastmoney.com/{0}.html",
   "RefreshInterval": 800,
-  "LableFormat": "{0} {1} {2} {3}\n",
+  "LableFormat": "[{0}]{1} {2} {3} {4}\n",
   "ParsingRules": {
     "Name": "//span[contains(@class,'quote_title_name')]",
     "Price": "//div[@class='zxj']",
     "Change": "//div[@class='zd']/span[1]",
     "ChangeRate": "//div[@class='zd']/span[2]"
   },
-  "ChromiumPtah": ""
+  "ChromiumPath": ""
 }
