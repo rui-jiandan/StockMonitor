@@ -55,5 +55,11 @@ namespace StockMonitor
         /// <returns></returns>
         Task ReloadURL(IEnumerable<string> codes);
 
+        /// <summary>
+        /// 重新加载错误的股票信息
+        /// </summary>
+        /// <param name="codes"></param>
+        /// <returns></returns>
+        Task ReloadErrorCode();
     }
 }

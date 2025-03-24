@@ -18,6 +18,7 @@ namespace StockMonitor
         private Config config;
         private bool isInitialize = false;
         private string Path;
+        private List<string> errorcode=new List<string>();
 
         public PuppeteerSharpScrape(Config config,string path)
         {
@@ -88,10 +89,17 @@ namespace StockMonitor
             {
                 return null;
             }
-            var html =await keyValuePairs[code].GetContentAsync();
-            var r = GetStockInfo(html,code);
-            return r;
-
+            try
+            {
+                var html = await keyValuePairs[code].GetContentAsync();
+                var r = GetStockInfo(html, code);
+                return r;
+            }
+            catch (Exception ex)
+            {
+                if(!errorcode.Contains(code)) errorcode.Add(code);
+                return null;
+            }
         }
 
         public async Task ReloadURL(IEnumerable<string> codes)
@@ -105,6 +113,7 @@ namespace StockMonitor
                         //刷新网页
                         var page=keyValuePairs[code];
                         await page?.ReloadAsync();
+                        errorcode.Remove(code);
                     }
                 }
             }
@@ -134,7 +143,9 @@ namespace StockMonitor
             return new StockInfo(code,stockName, stockPrice, stockChange, changeRate);
         }
 
-
-        
+        public async Task ReloadErrorCode()
+        {
+            await ReloadURL(errorcode);
+        }
     }
 }

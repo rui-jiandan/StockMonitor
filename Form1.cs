@@ -64,12 +64,11 @@ namespace StockMonitor
                 try
                 {
                     await Timer_Tick();
+                    await scraper?.ReloadErrorCode();
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError("抓取出错", ex);
-                    scraper?.ReloadURL(currentStockCodes);
-                    Logger.LogDebug("重新加载页面");
                 }
                 finally
                 {
