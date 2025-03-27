@@ -78,7 +78,9 @@ namespace StockMonitor
             List<StockInfo> stocks = new List<StockInfo>();
             foreach (var item in keyValuePairs)
             {
-                stocks.Add(await ScrapeAsync(item.Key));
+                var r= await ScrapeAsync(item.Key);
+                if (r != null)
+                    stocks.Add(r);
             }
             return stocks;
         }
@@ -98,6 +100,7 @@ namespace StockMonitor
             catch (Exception ex)
             {
                 if(!errorcode.Contains(code)) errorcode.Add(code);
+                Logger.LogError($"{code}读取数据出错", ex);
                 return null;
             }
         }
@@ -113,7 +116,7 @@ namespace StockMonitor
                         //刷新网页
                         var page=keyValuePairs[code];
                         await page?.ReloadAsync();
-                        errorcode.Remove(code);
+                        Logger.LogDebug($"{code}重新加载");
                     }
                 }
             }
@@ -146,6 +149,8 @@ namespace StockMonitor
         public async Task ReloadErrorCode()
         {
             await ReloadURL(errorcode);
+            
+            errorcode =new List<string>();
         }
     }
 }

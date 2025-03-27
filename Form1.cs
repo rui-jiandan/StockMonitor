@@ -122,6 +122,7 @@ namespace StockMonitor
                     int y = 0;
                     foreach (var info in stockInfoList)
                     {
+                        if (info == null) continue;
                         using (Font font = new Font("Arial", 10, FontStyle.Bold))
                         {
                             string stockInfo = string.Format(config.LableFormat,info.Code, info.Name, info.Price, info.Change, info.ChangeRate);
