@@ -100,14 +100,14 @@ namespace StockMonitor
             {
                 if (!currentStockCodes.Contains(code))
                 {
-                    scraper.RemoveUrl(code);
+                    await scraper.RemoveUrl(code);
                 }
             }
 
             foreach (var code in currentStockCodes)
             {
                 string url = string.Format(config.StockBaseURL, code);
-                scraper.LoadUrl(code, url);
+                await scraper.LoadUrl(code, url);
             }
         }
 
@@ -182,7 +182,10 @@ namespace StockMonitor
         private void StocksWatcher_Changed(object sender, FileSystemEventArgs e)
         {
             Logger.LogDebug("配置刷新");
+            isRunning = false;
             LoadStocks();
+            StartSingleThreadedTimer();
+            isRunning = true;
         }
 
         private void Form1_Load(object sender, EventArgs e)

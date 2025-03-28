@@ -54,7 +54,7 @@ namespace StockMonitor
             }
             else
             {
-                await keyValuePairs[code].GoToAsync(url);
+                await keyValuePairs[code].ReloadAsync();
             }
         }
 
@@ -68,8 +68,7 @@ namespace StockMonitor
         {
             if (keyValuePairs.ContainsKey(code))
             {
-                var page=keyValuePairs[code];
-                await page.CloseAsync();
+                keyValuePairs.Remove(code);
             }
         }
 
