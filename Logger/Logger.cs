@@ -5,7 +5,7 @@ namespace StockMonitor
 {
     public static class Logger
     {
-        private static readonly string logFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs",DateTime.Now.ToString("yyyyMMdd"), "logfile.log");
+        private static readonly string logFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", $"{DateTime.Now.ToString("yyyyMMdd")}logfile.log");
 
         static Logger()
         {
