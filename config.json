@@ -1,7 +1,8 @@
+//东方财富
 {
   "StockBaseURL": "https://quote.eastmoney.com/{0}.html",
   "RefreshInterval": 800,
-  "LableFormat": "[{0}]{1} {2} {3} {4}\n",
+  "LableFormat": "[{0}]{1}\n{2} {3} {4}\n",
   "ParsingRules": {
     "Name": "//span[contains(@class,'quote_title_name')]",
     "Price": "//div[@class='zxj']",
@@ -10,3 +11,17 @@
   },
   "ChromiumPath": ""
 }
+
+//同花顺
+//{
+//  "StockBaseURL": "https://stockpage.10jqka.com.cn/{0}/",
+//  "RefreshInterval": 800,
+//  "LableFormat": "[{0}]{1} {2} {3} {4}\n",
+//  "ParsingRules": {
+//    "Name": "//div[@id='pageStockName']",
+//    "Price": "//span[@id='hexm_curPrice']",
+//    "Change": "//span[@id='hexm_float_price']",
+//    "ChangeRate": "//span[@id='hexm_float_rate']"
+//  },
+//  "ChromiumPath": ""
+//}
