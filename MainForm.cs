@@ -1,4 +1,5 @@
 ﻿// MainForm.cs 文件
+using OpenQA.Selenium;
 using StockMonitor.Model;
 using System;
 using System.Collections.Generic;
@@ -69,7 +70,6 @@ namespace StockMonitor
             stockInfoTextBox = new TransparentRichTextBox();
             stockInfoTextBox.Dock = DockStyle.Fill;
             stockInfoTextBox.ReadOnly = true;
-            stockInfoTextBox.Visible = true;
             this.Controls.Add(stockInfoTextBox);
             this.notifyIcon.Icon= new Icon("icon.ico");
         }
@@ -89,13 +89,9 @@ namespace StockMonitor
             addStockMenuItem.Click += AddStockMenuItem_Click;
             contextMenuStrip.Items.Add(addStockMenuItem);
 
-            ToolStripMenuItem editStockMenuItem = new ToolStripMenuItem("编辑");
-            editStockMenuItem.Click += EditStockMenuItem_Click;
-            contextMenuStrip.Items.Add(editStockMenuItem);
-
-            ToolStripMenuItem deleteStockMenuItem = new ToolStripMenuItem("删除");
-            deleteStockMenuItem.Click += DeleteStockMenuItem_Click;
-            contextMenuStrip.Items.Add(deleteStockMenuItem);
+            ToolStripMenuItem editDeleteStockMenuItem = new ToolStripMenuItem("修改");
+            editDeleteStockMenuItem.Click += EditDeleteStockMenuItem_Click;
+            contextMenuStrip.Items.Add(editDeleteStockMenuItem);
 
             ToolStripMenuItem showFormMenuItem = new ToolStripMenuItem("显示");
             showFormMenuItem.Click += ShowFormMenuItem_Click;
@@ -107,10 +103,27 @@ namespace StockMonitor
 
             notifyIcon.ContextMenuStrip = contextMenuStrip;
             notifyIcon.Icon = SystemIcons.Application;
-            notifyIcon.Text = "股票监控程序";
+            notifyIcon.Text = "监控";
             notifyIcon.Visible = true;
             notifyIcon.DoubleClick += NotifyIcon_DoubleClick;
             this.Hide();
+        }
+
+        private void EditDeleteStockMenuItem_Click(object sender, EventArgs e)
+        {
+            if (stocks.Count > 0)
+            {
+                EditDeleteStockForm editDeleteStockForm = new EditDeleteStockForm(stocks);
+                if (editDeleteStockForm.ShowDialog() == DialogResult.OK)
+                {
+                    SaveStocksToFile();
+                    UpdateUI();
+                }
+            }
+            else
+            {
+                AddStockMenuItem_Click(sender, e);
+            }
         }
 
         private void AddStockMenuItem_Click(object sender, EventArgs e)
@@ -127,40 +140,6 @@ namespace StockMonitor
                 stocks.Add(newStock);
                 SaveStocksToFile();
                 UpdateUI();
-            }
-        }
-
-        private void EditStockMenuItem_Click(object sender, EventArgs e)
-        {
-            if (stocks.Count > 0)
-            {
-                EditStockForm editStockForm = new EditStockForm(stocks);
-                if (editStockForm.ShowDialog() == DialogResult.OK)
-                {
-                    SaveStocksToFile();
-                    UpdateUI();
-                }
-            }
-            else
-            {
-                MessageBox.Show("没有可编辑的股票。");
-            }
-        }
-
-        private void DeleteStockMenuItem_Click(object sender, EventArgs e)
-        {
-            if (stocks.Count > 0)
-            {
-                DeleteStockForm deleteStockForm = new DeleteStockForm(stocks);
-                if (deleteStockForm.ShowDialog() == DialogResult.OK)
-                {
-                    SaveStocksToFile();
-                    UpdateUI();
-                }
-            }
-            else
-            {
-                MessageBox.Show("没有可删除的股票。");
             }
         }
 
@@ -277,7 +256,7 @@ namespace StockMonitor
                 {
                     string placeholder = $"#{descriptionAttribute.Description}";
                     var valuestr = property.GetValue(stockView)?.ToString();
-                    if (!string.IsNullOrEmpty(valuestr))
+                    if (valuestr != null)
                     {
                         result = result.Replace(placeholder, valuestr);
                     }

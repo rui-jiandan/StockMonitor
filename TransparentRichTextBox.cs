@@ -15,7 +15,10 @@ namespace StockMonitor
                 this.SetStyle(ControlStyles.OptimizedDoubleBuffer |
                               ControlStyles.AllPaintingInWmPaint |
                               ControlStyles.SupportsTransparentBackColor, true);
-                this.BackColor = Color.Transparent;
+
+                this.BackColor = Color.FromArgb(128, Color.White);
+                this.BorderStyle = BorderStyle.None;
+                this.TabStop = false;
 
                 // 防止父容器重绘影响
                 this.SetStyle(ControlStyles.ResizeRedraw, false);
@@ -37,10 +40,14 @@ namespace StockMonitor
 
             protected override void WndProc(ref Message m)
             {
-                const int WM_ERASEBKGND = 0x0014;
-                if (m.Msg == WM_ERASEBKGND)
+                if (m.Msg == 0x0014)
                 {
                     // 不处理背景擦除消息，避免背景重绘
+                    return;
+                }
+                if (m.Msg == 0x0007)
+                {
+                    // 不处理获得焦点的消息，避免显示输入光标
                     return;
                 }
                 base.WndProc(ref m);

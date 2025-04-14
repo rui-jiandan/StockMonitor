@@ -22,8 +22,14 @@ namespace StockMonitor
         {
             get
             {
-                int.TryParse(positionTextBox.Text, out var result);
-                return result;
+                if(int.TryParse(positionTextBox.Text, out var result))
+                {
+                    return result;
+                }
+                else
+                {
+                    return 0;
+                }                
             }
             set => positionTextBox.Text = value.ToString();
         }
@@ -32,8 +38,14 @@ namespace StockMonitor
         {
             get
             {
-                decimal.TryParse(costTextBox.Text, out var result);
-                return result;
+                if (int.TryParse(costTextBox.Text, out var result))
+                {
+                    return result;
+                }
+                else
+                {
+                    return 0;
+                }
             }
             set => costTextBox.Text = value.ToString();
         }
@@ -77,19 +89,13 @@ namespace StockMonitor
 
             this.Size = new Size(230, 200);
             this.Text = "添加股票";
+            this.ShowInTaskbar = false;
         }
 
         private void OkButton_Click(object sender, EventArgs e)
         {
-            if (int.TryParse(positionTextBox.Text, out var position) && decimal.TryParse(costTextBox.Text, out var cost))
-            {
-                this.DialogResult = DialogResult.OK;
-                this.Close();
-            }
-            else
-            {
-                MessageBox.Show("持仓和成本必须为有效的数字！");
-            }
+            this.DialogResult = DialogResult.OK;
+            this.Close();
         }
 
         private void CancelButton_Click(object sender, EventArgs e)
