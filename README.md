@@ -1,40 +1,54 @@
-# Stock Monitor
+# StockMonitor
 
-Stock Monitor 是一个用于监控股票信息的桌面应用程序。从网页中提取股票信息，并在界面上显示。
+StockMonitor 是一个基于 Windows Forms 的实时股票监控工具，支持股票数据的实时刷新和可视化展示，帮助用户快速了解持仓信息和盈亏情况。
 
-## 特性
+## 功能特性
 
-- 实时更新股票信息
-- 可配置的抓取规则和刷新间隔
-- 支持系统托盘图标
+- **实时股票数据刷新**：通过配置文件设置刷新间隔，默认每 2 秒刷新一次。
+- **股票信息展示**：显示股票代码、名称、价格、开盘价、最高价、最低价、盈亏等信息。
+- **今日盈亏统计**：支持显示今日盈亏金额和盈亏比例。
+- **系统托盘支持**：提供系统托盘菜单，支持显示、隐藏和退出操作。
+- **透明窗口**：主窗口支持透明背景，始终置顶显示。
+- **可配置性**：通过 `config.json` 文件自定义显示格式和刷新时间。
 
 
-## 配置
+## 配置文件说明
 
-在运行应用程序之前，请确保配置文件 `config.json` 已正确设置。以下是 `config.json` 的示例：
+项目包含一个 `config.json` 文件，用于自定义显示格式和刷新时间：
+- `ShowFormat`：定义股票信息的显示格式，支持占位符（如 `#name` 表示股票名称）。
+- `RefreshTime`：设置数据刷新间隔（单位：毫秒）。
+- `ShowTodaySumFormat`：定义今日盈亏汇总的显示格式。
+
+示例配置：
 ```json
 {
-	"StockBaseURL": "https://quote.eastmoney.com/{0}.html",
-	"RefreshInterval": 1000,
-	"LableFormat": "{0} {1} {2} {3}\n",
-	"ParsingRules": {
-		"Name": "//span[contains(@class,'quote_title_name')]",
-		"Price": "//div[@class='zxj']",
-		"Change": "//div[@class='zd']/span[1]",
-		"ChangeRate": "//div[@class='zd']/span[2]"
-	},
-	"ChromiumPath": ""
+  "ShowFormat": "#name #price #change #rate% #makemoney \r\n",
+  "RefreshTime": 2000,
+  "ShowTodaySumFormat": "今日盈亏:#money, 今日比例 #rate% \r\n"
 }
 ```
 
-- `StockBaseURL`：股票信息的基础 URL，使用 `{0}` 作为股票代码的占位符。
-- `RefreshInterval`：刷新间隔（毫秒）。
-- `LableFormat`：显示股票信息的格式。
-- `ParsingRules`：抓取股票信息的 XPath 规则。
-- `ChromiumPath`：Chromium 浏览器的路径（用于 PuppeteerSharp）。, 如果为空则使用默认路径。
+## 使用方法
 
-## 使用
+1. 启动程序后，主窗口会显示股票的实时数据。
+2. 数据表格包括以下信息：
+   - **代码**：股票代码。
+   - **名称**：股票名称。
+   - **价格**：当前股价。
+   - **开盘价**：当日开盘价。
+   - **最高价**：当日最高价。
+   - **最低价**：当日最低价。
+   - **盈亏**：当前持仓盈亏。
+3. 通过系统托盘菜单可执行以下操作：
+   - **增加**：添加新的股票信息。
+   - **修改**：编辑或删除现有股票信息。
+   - **显示**：显示主窗口。
+   - **退出**：退出程序。
 
-1. 运行应用程序：
-    
-    
+## 核心功能实现
+
+- **股票数据刷新**：通过调用新浪财经 API 获取股票实时数据。
+- **透明窗口**：通过设置 `TransparencyKey` 和 `Opacity` 实现透明效果。
+- **盈亏计算**：根据持仓成本和当前价格计算盈亏金额和比例。
+- **自定义显示**：通过占位符动态生成股票信息的显示内容。
+
