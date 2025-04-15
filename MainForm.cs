@@ -39,6 +39,9 @@ namespace StockMonitor
             this.FormBorderStyle = FormBorderStyle.None;
             this.ShowInTaskbar = false;
 
+            // 添加双击事件
+            this.MouseDoubleClick += MainForm_MouseDoubleClick;
+
             // 添加默认请求头
             httpClient.DefaultRequestHeaders.Add("Referer", "https://finance.sina.com.cn/");
 
@@ -59,6 +62,7 @@ namespace StockMonitor
             viewproperties=typeof(StockView).GetProperties();
         }
 
+
         private void SetupForm()
         {
             this.Size = new Size(250, 130);
@@ -69,6 +73,7 @@ namespace StockMonitor
             stockInfoTextBox = new TransparentRichTextBox();
             stockInfoTextBox.Dock = DockStyle.Fill;
             stockInfoTextBox.ReadOnly = true;
+            stockInfoTextBox.DoubleClick += (s, e) => this.Hide();
             this.Controls.Add(stockInfoTextBox);
             this.notifyIcon.Icon= new Icon("icon.ico");
         }
@@ -322,6 +327,21 @@ namespace StockMonitor
             }
             return null;
         }
+
+        #region 窗体事件
+        private void MainForm_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (this.Visible)
+            {
+                this.Hide(); // 隐藏窗体
+            }
+            else
+            {
+                this.Show(); // 显示窗体
+            }
+        }
+
+        #endregion
     }
 
 }

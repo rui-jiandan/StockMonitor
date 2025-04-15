@@ -19,22 +19,6 @@ namespace StockMonitor
                 this.BackColor = Color.FromArgb(40, Color.Black);
                 this.BorderStyle = BorderStyle.None;
                 this.TabStop = false;
-                // 防止父容器重绘影响
-                this.SetStyle(ControlStyles.ResizeRedraw, false);
-            }
-
-            protected override void OnPaint(PaintEventArgs e)
-            {
-                // 双缓冲绘制
-                using (BufferedGraphicsContext context = BufferedGraphicsManager.Current)
-                {
-                    using (BufferedGraphics buffer = context.Allocate(e.Graphics, this.ClientRectangle))
-                    {
-                        buffer.Graphics.Clear(this.BackColor);
-                        base.OnPaint(new PaintEventArgs(buffer.Graphics, e.ClipRectangle));
-                        buffer.Render(e.Graphics);
-                    }
-                }
             }
 
             protected override void WndProc(ref Message m)
