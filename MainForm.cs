@@ -28,9 +28,8 @@ namespace StockMonitor
         private HttpClient httpClient = new HttpClient();
         private TransparentRichTextBox stockInfoTextBox;
         private List<StockView> stockViews = new List<StockView>();
-        private string showFormat;
-        private int refreshTime;
         private PropertyInfo[] viewproperties = null;
+        private ConfigV1 config = null;
 
         public MainForm()
         {
@@ -186,9 +185,7 @@ namespace StockMonitor
             if (File.Exists(configFilePath))
             {
                 string json = File.ReadAllText(configFilePath);
-                var config = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
-                showFormat = config["ShowFormat"].ToString();
-                refreshTime = int.Parse(config["RefreshTime"].ToString());
+                config = JsonSerializer.Deserialize<ConfigV1>(json);
             }
         }
 
@@ -197,7 +194,7 @@ namespace StockMonitor
             while (true)
             {
                 await RefreshStockData();
-                await Task.Delay(refreshTime); // 根据配置文件设置刷新间隔
+                await Task.Delay(config.RefreshTime); // 根据配置文件设置刷新间隔
                 if (DateTime.Now.Hour >= 15)
                 {
                     break; 
@@ -231,7 +228,7 @@ namespace StockMonitor
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"数据刷新出错: {ex.Message}");
+                Logger.LogError(ex.Message,ex);
             }
         }
 
@@ -248,7 +245,7 @@ namespace StockMonitor
 
         private string GetStockShowStr(StockView stockView)
         {
-            string result = showFormat;
+            string result = config.ShowFormat;
             foreach (var property in viewproperties)
             {
                 var descriptionAttribute = property.GetCustomAttribute<DescriptionAttribute>();

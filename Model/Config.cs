@@ -45,4 +45,23 @@ namespace StockMonitor.Model
         /// </summary>
         public string ChangeRate { get; set; }
     }
+
+
+    public class ConfigV1
+    {
+        /// <summary>
+        /// 股票显示格式信息
+        /// </summary>
+        public string ShowFormat { get; set; }
+
+        /// <summary>
+        /// 数据刷新时间
+        /// </summary>
+        public int RefreshTime { get; set; }
+
+        /// <summary>
+        /// 今日汇总显示格式信息
+        /// </summary>
+        public string ShowTodaySumFormat { get; set; }
+    }
 }
