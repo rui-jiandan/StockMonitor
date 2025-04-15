@@ -235,11 +235,28 @@ namespace StockMonitor
         private void UpdateUI()
         {
             stockInfoTextBox.Clear();
+            SetTodaySumStr();
             foreach (var stock in stockViews)
             {
                 string info = GetStockShowStr(stock);
                 stockInfoTextBox.SelectionColor = stock.Color;
                 stockInfoTextBox.AppendText(info);
+            }
+        }
+
+        private void SetTodaySumStr()
+        {
+            if (!string.IsNullOrEmpty(config?.ShowTodaySumFormat) && stockViews.Any(x => x.Position > 0))
+            {
+                var sum = stockViews.Sum(x => x.Change * x.Position);
+                var sumcost = stockViews.Sum(x => x.Cost * x.Position);
+                var rate = Math.Round((sum / sumcost) * 100, 2);
+                var result = config.ShowTodaySumFormat;
+                result = result
+                    .Replace("#money", sum.ToString("F2"))
+                    .Replace("#rate", rate.ToString());
+                stockInfoTextBox.SelectionColor = sum > 0 ? Color.Red : sum < 0 ? Color.Green : Color.White;
+                stockInfoTextBox.AppendText(result);
             }
         }
 
