@@ -16,10 +16,9 @@ namespace StockMonitor
                               ControlStyles.AllPaintingInWmPaint |
                               ControlStyles.SupportsTransparentBackColor, true);
 
-                this.BackColor = Color.FromArgb(128, Color.White);
+                this.BackColor = Color.FromArgb(40, Color.Black);
                 this.BorderStyle = BorderStyle.None;
                 this.TabStop = false;
-
                 // 防止父容器重绘影响
                 this.SetStyle(ControlStyles.ResizeRedraw, false);
             }
