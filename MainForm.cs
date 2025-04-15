@@ -1,5 +1,4 @@
-﻿// MainForm.cs 文件
-using OpenQA.Selenium;
+﻿
 using StockMonitor.Model;
 using System;
 using System.Collections.Generic;
@@ -14,7 +13,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using static OpenQA.Selenium.BiDi.Modules.Script.RemoteValue.WindowProxy;
 
 namespace StockMonitor
 {
