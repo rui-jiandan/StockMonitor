@@ -11,6 +11,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -87,11 +88,7 @@ namespace StockMonitor
             notifyIcon = new NotifyIcon();
             contextMenuStrip = new ContextMenuStrip();
 
-            ToolStripMenuItem addStockMenuItem = new ToolStripMenuItem("增加");
-            addStockMenuItem.Click += AddStockMenuItem_Click;
-            contextMenuStrip.Items.Add(addStockMenuItem);
-
-            ToolStripMenuItem editDeleteStockMenuItem = new ToolStripMenuItem("修改");
+            ToolStripMenuItem editDeleteStockMenuItem = new ToolStripMenuItem("操作");
             editDeleteStockMenuItem.Click += EditDeleteStockMenuItem_Click;
             contextMenuStrip.Items.Add(editDeleteStockMenuItem);
 
@@ -113,33 +110,9 @@ namespace StockMonitor
 
         private void EditDeleteStockMenuItem_Click(object sender, EventArgs e)
         {
-            if (stocks.Count > 0)
+            EditDeleteStockForm editDeleteStockForm = new EditDeleteStockForm(stocks);
+            if (editDeleteStockForm.ShowDialog() == DialogResult.OK)
             {
-                EditDeleteStockForm editDeleteStockForm = new EditDeleteStockForm(stocks);
-                if (editDeleteStockForm.ShowDialog() == DialogResult.OK)
-                {
-                    SaveStocksToFile();
-                    UpdateUI();
-                }
-            }
-            else
-            {
-                AddStockMenuItem_Click(sender, e);
-            }
-        }
-
-        private void AddStockMenuItem_Click(object sender, EventArgs e)
-        {
-            AddStockForm addStockForm = new AddStockForm();
-            if (addStockForm.ShowDialog() == DialogResult.OK)
-            {
-                StockConfig newStock = new StockConfig
-                {
-                    Code = addStockForm.StockCode,
-                    Position = addStockForm.Position,
-                    Cost = addStockForm.Cost
-                };
-                stocks.Add(newStock);
                 SaveStocksToFile();
                 UpdateUI();
             }
@@ -208,7 +181,7 @@ namespace StockMonitor
         private async Task RefreshStockData()
         {
             if (stocks.Count == 0) return;
-            string codeList = string.Join(",", stocks.Select(s => "sh" + s.Code).Concat(stocks.Select(s => "sz" + s.Code)));
+            string codeList = string.Join(",", stocks.Select(s => "sh" + s.Code).Concat(stocks.Select(s => "sz" + s.Code)).Distinct());
             string url = $"https://hq.sinajs.cn/list={codeList}";
             try
             {
@@ -251,7 +224,7 @@ namespace StockMonitor
         {
             if (!string.IsNullOrEmpty(config?.ShowTodaySumFormat) && stockViews.Any(x => x.Position > 0))
             {
-                var sum = stockViews.Sum(x => x.Change * x.Position);
+                var sum = stockViews.Sum(x => x.Change * x.Position+ x.NowTMoney);
                 var sumcost = stockViews.Sum(x => x.Cost * x.Position);
                 var rate = Math.Round((sum / sumcost) * 100, 2);
                 var result = config.ShowTodaySumFormat;
@@ -297,16 +270,19 @@ namespace StockMonitor
             let low = params[5];
              * */
             string[] parts = apistr.Split('=');
+            var matchpattern = @"\d+";
             if (parts.Length == 2)
             {
-                string code = parts[0].Split("var hq_str_")[1];
+                string fullcode = parts[0].Split("var hq_str_")[1];
                 string data = parts[1].Trim('"');
                 string[] dataParts = data.Split(',');
                 if (dataParts.Length > 3)
                 {
+                    var rmatch = Regex.Match(fullcode, matchpattern);
                     var r = new StockView
                     {
-                        Code = code,
+                        FullCode= fullcode,
+                        Code = rmatch.Success?rmatch.Value: fullcode,
                         Name = dataParts[0],
                         OpenPrice = decimal.Parse(dataParts[1]),
                         Price = decimal.Parse(dataParts[3]),
@@ -314,16 +290,33 @@ namespace StockMonitor
                         LowPrice = decimal.Parse(dataParts[5]),
                         YestClose=decimal.Parse(dataParts[2]),
                     };
-                    StockConfig stock = stocks.FirstOrDefault(s => ("sh" + s.Code == code || "sz" + s.Code == code));
+                    StockConfig stock = stocks.FirstOrDefault(s => s.IncreaseTime==0&&s.Code==r.Code);
                     if (stock != null)
                     {
                         r.Position = stock.Position;
                         r.Cost = stock.Cost;
                     }
+                    SetToDayTMoney(r);
                     return r;
                 }
             }
             return null;
+        }
+
+        private void SetToDayTMoney(StockView t)
+        {
+            if (t == null) return;
+            var tlist = stocks.Where(x => x.Code == t.Code && x.IncreaseTime != 0);
+            if (tlist.Any())
+            {
+                var price = t.Price;
+                var Tmoney = 0M;
+                foreach (var item in tlist)
+                {
+                    Tmoney+=item.IncreaseTime>0 ? item.Position * (price - item.Cost) : item.Position * (item.Cost - price);
+                }
+                t.NowTMoney = Tmoney;
+            }
         }
 
         #region 窗体事件

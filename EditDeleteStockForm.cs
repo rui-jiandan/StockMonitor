@@ -15,7 +15,8 @@ namespace StockMonitor
         private TextBox costTextBox;
         private Button editButton;
         private Button deleteButton;
-        private Button cancelButton;
+        private Button addPositionButton;
+        private Button reducePositionButton;
 
         public EditDeleteStockForm(List<StockConfig> stocks)
         {
@@ -30,12 +31,17 @@ namespace StockMonitor
             costTextBox = new TextBox();
             editButton = new Button();
             deleteButton = new Button();
-            cancelButton = new Button();
+            addPositionButton = new Button();
+            reducePositionButton = new Button();
 
             stockComboBox.Location = new Point(10, 10);
-            stockComboBox.Size = new Size(200, 20);
+            stockComboBox.Size = new Size(170, 20);
             foreach (StockConfig stock in stocks)
             {
+                if (stock.IncreaseTime != 0)
+                {
+                    continue;                    
+                }
                 stockComboBox.Items.Add(stock.Code);
             }
             if (stockComboBox.Items.Count > 0)
@@ -44,29 +50,56 @@ namespace StockMonitor
                 ShowStockInfo();
             }
             stockComboBox.SelectedIndexChanged += StockComboBox_SelectedIndexChanged;
+            stockComboBox.TextChanged += StockComboBox_SelectedIndexChanged;
             this.Controls.Add(stockComboBox);
 
-            positionTextBox.Location = new Point(10, 40);
-            positionTextBox.Size = new Size(200, 20);
+            // 创建和配置 Position Label
+            Label positionLabel = new Label();
+            positionLabel.Text = "持仓:";
+            positionLabel.Location = new Point(10, 45);
+            positionLabel.Size = new Size(50, 20);
+            this.Controls.Add(positionLabel);
+
+            positionTextBox.Location = new Point(62, 40);
+            positionTextBox.Size = new Size(118, 20);
             this.Controls.Add(positionTextBox);
 
-            costTextBox.Location = new Point(10, 70);
-            costTextBox.Size = new Size(200, 20);
+            // 创建和配置 Cost Label
+            Label costLabel = new Label();
+            costLabel.Text = "成本:";
+            costLabel.Location = new Point(10, 75);
+            costLabel.Size = new Size(50, 20);
+            this.Controls.Add(costLabel);
+
+            costTextBox.Location = new Point(62, 70);
+            costTextBox.Size = new Size(118, 20);
             this.Controls.Add(costTextBox);
 
-            editButton.Location = new Point(10, 100);
+            reducePositionButton.Location = new Point(10, 100);
+            reducePositionButton.Size = new Size(80, 25);
+            reducePositionButton.Text = "减仓";
+            reducePositionButton.Click += ReducePositionButton_Click;
+            this.Controls.Add(reducePositionButton);
+
+            addPositionButton.Location = new Point(10, 130);
+            addPositionButton.Size = new Size(80, 25);
+            addPositionButton.Text = "加仓";
+            addPositionButton.Click += AddPositionButton_Click;
+            this.Controls.Add(addPositionButton);
+
+            editButton.Location = new Point(100, 100);
             editButton.Size = new Size(80, 25);
-            editButton.Text = "编辑";
+            editButton.Text = "增改";
             editButton.Click += EditButton_Click;
             this.Controls.Add(editButton);
 
-            deleteButton.Location = new Point(100, 100);
+            deleteButton.Location = new Point(100, 130);
             deleteButton.Size = new Size(80, 25);
             deleteButton.Text = "删除";
             deleteButton.Click += DeleteButton_Click;
             this.Controls.Add(deleteButton);
 
-            this.Size = new Size(230, 180);
+            this.Size = new Size(205, 200); // 调整窗体大小以适应新按钮
             this.Text = "编辑/删除股票";
             this.ShowInTaskbar = false;
         }
@@ -78,15 +111,27 @@ namespace StockMonitor
 
         private void ShowStockInfo()
         {
+            var code = string.Empty;
             if (stockComboBox.SelectedIndex >= 0)
             {
+                code= stockComboBox.SelectedItem.ToString();
                 string selectedCode = stockComboBox.SelectedItem.ToString();
-                StockConfig stock = stocks.FirstOrDefault(s => s.Code == selectedCode);
-                if (stock != null)
-                {
-                    positionTextBox.Text = stock.Position.ToString();
-                    costTextBox.Text = stock.Cost.ToString();
-                }
+            }else if (!string.IsNullOrEmpty(stockComboBox.Text))
+            {
+                code = stockComboBox.Text.Trim();
+            }
+            if (string.IsNullOrEmpty(code))
+                return;
+            StockConfig stock = stocks.FirstOrDefault(s => s.Code == code && s.IncreaseTime == 0);
+            if (stock != null)
+            {
+                positionTextBox.Text = stock.Position.ToString();
+                costTextBox.Text = stock.Cost.ToString();
+            }
+            else
+            {
+                positionTextBox.Text = "";
+                costTextBox.Text = "";
             }
         }
 
@@ -95,7 +140,7 @@ namespace StockMonitor
             if (stockComboBox.SelectedIndex >= 0)
             {
                 string selectedCode = stockComboBox.SelectedItem.ToString();
-                StockConfig stockToEdit = stocks.FirstOrDefault(s => s.Code == selectedCode);
+                StockConfig stockToEdit = stocks.FirstOrDefault(s => s.Code == selectedCode && s.IncreaseTime == 0);
                 if (stockToEdit != null)
                 {
                     if (int.TryParse(positionTextBox.Text, out var position) && decimal.TryParse(costTextBox.Text, out var cost))
@@ -114,6 +159,28 @@ namespace StockMonitor
                     }
                 }
             }
+            else
+            {
+                string newCode = stockComboBox.Text.Trim();
+                if (string.IsNullOrEmpty(newCode)) { return; }
+
+                if (!int.TryParse(positionTextBox.Text, out var position))
+                {
+                    position = 0;
+                }
+                if(!decimal.TryParse(costTextBox.Text, out var cost))
+                {
+                    cost = 0;
+                }
+                stocks.Add(new StockConfig
+                {
+                    Code = newCode,
+                    Position = position,
+                    Cost = cost
+                });
+                this.DialogResult = DialogResult.OK;
+                this.Close();
+            }
         }
 
         private void DeleteButton_Click(object sender, EventArgs e)
@@ -121,12 +188,42 @@ namespace StockMonitor
             if (stockComboBox.SelectedIndex >= 0)
             {
                 string selectedCode = stockComboBox.SelectedItem.ToString();
-                StockConfig stockToDelete = stocks.FirstOrDefault(s => s.Code == selectedCode);
-                if (stockToDelete != null)
+                stocks.RemoveAll(s=> s.Code == selectedCode);
+                this.DialogResult = DialogResult.OK;
+                this.Close();
+            }
+        }
+
+        private void AddPositionButton_Click(object sender, EventArgs e)
+        {
+            ChangePosition();
+        }
+
+        private void ReducePositionButton_Click(object sender, EventArgs e)
+        {
+            ChangePosition(false);
+        }
+
+        private void ChangePosition(bool isadd=true)
+        {
+            if (stockComboBox.SelectedIndex >= 0)
+            {
+                string selectedCode = stockComboBox.SelectedItem.ToString();
+                StockConfig stockToAddPosition = stocks.FirstOrDefault(s => s.Code == selectedCode);
+                if (stockToAddPosition != null)
                 {
-                    stocks.Remove(stockToDelete);
-                    this.DialogResult = DialogResult.OK;
-                    this.Close();
+                    if (int.TryParse(positionTextBox.Text, out var position) && decimal.TryParse(costTextBox.Text, out var cost))
+                    {
+                        stocks.Add(new StockConfig
+                        {
+                            Code = selectedCode,
+                            Position = position,
+                            Cost = cost,
+                            IncreaseTime = isadd ? long.Parse(DateTime.Now.ToString("yyyyMMdd")) : long.Parse(DateTime.Now.ToString("yyyyMMdd")) * -1
+                        });
+                        this.DialogResult = DialogResult.OK;
+                        this.Close();
+                    }
                 }
             }
         }

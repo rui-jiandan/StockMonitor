@@ -14,7 +14,11 @@ namespace StockMonitor.Model
     /// </summary>
     public class StockView: StockConfig
     {
-
+        /// <summary>
+        /// 股票代码全称
+        /// </summary>
+        [Description("fullcode")]
+        public string FullCode { get; set; }
         /// <summary>
         /// 股票名称
         /// </summary>
@@ -94,8 +98,14 @@ namespace StockMonitor.Model
         {
             get
             {
-                return Position > 0 ? (Change * Position).ToString("F2") : "";
+                return Position > 0 ? (Change * Position+ NowTMoney).ToString("F2") : "";
             }
         }
+
+        /// <summary>
+        /// 当日T金额
+        /// </summary>
+        [Description("tmoney")]
+        public decimal NowTMoney { get; set; }
     }
 }
