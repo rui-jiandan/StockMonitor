@@ -126,7 +126,7 @@ namespace StockMonitor
         private void ExitMenuItem_Click(object sender, EventArgs e)
         {
             notifyIcon.Visible = false;
-            Application.Exit();
+            System.Windows.Forms.Application.Exit();
         }
 
         private void NotifyIcon_DoubleClick(object sender, EventArgs e)
@@ -147,6 +147,52 @@ namespace StockMonitor
             {
                 string json = File.ReadAllText(dataFilePath);
                 stocks = JsonSerializer.Deserialize<List<StockConfig>>(json);
+                UpdateStocksCost(stocks);
+            }
+        }
+
+        /// <summary>
+        /// 更新股票成本
+        /// </summary>
+        private void UpdateStocksCost(List<StockConfig>  s)
+        {
+            var time = long.Parse(DateTime.Now.ToString("yyyyMMdd"));
+            if (s.Any(x => x.IncreaseTime != 0&& time>Math.Abs(x.IncreaseTime)))
+            {
+                var codes = s.Where(x => x.IncreaseTime != 0).Select(x => x.Code).Distinct();
+                var newsotcks = new List<StockConfig>();
+                foreach (var item in codes)
+                {
+                    var codelist = stocks.Where(x => x.Code == item).ToList();
+                    if (codelist.Any())
+                    {
+                        var costmoney = 0M;
+                        var position = 0;
+                        foreach (var r in codelist)
+                        {
+                            if (r.IncreaseTime >= 0)
+                            {
+                                costmoney += r.Cost * r.Position;
+                                position += r.Position;
+                            }
+                            else
+                            {
+                                costmoney -= r.Cost * r.Position;
+                                position -= r.Position;
+                            }
+                        }
+                        newsotcks.Add(new StockConfig
+                        {
+                            Code = item,
+                            Cost = costmoney / position,
+                            Position = position,
+                            IncreaseTime = 0
+                        });
+                    }
+                }
+                stocks.RemoveAll(x => codes.Contains(x.Code));
+                stocks.AddRange(newsotcks);
+                SaveStocksToFile();
             }
         }
 
@@ -171,11 +217,17 @@ namespace StockMonitor
             {
                 await RefreshStockData();
                 await Task.Delay(config.RefreshTime); // 根据配置文件设置刷新间隔
-                if (DateTime.Now.Hour >= 15)
+                if (IsStop())
                 {
                     break; 
                 }
             }
+        }
+
+        private bool IsStop()
+        {
+            var now = DateTime.Now;
+            return now > new DateTime(now.Year, now.Month, now.Day, 15, 5, 0);
         }
 
         private async Task RefreshStockData()
@@ -210,14 +262,15 @@ namespace StockMonitor
 
         private void UpdateUI()
         {
-            stockInfoTextBox.Clear();
-            SetTodaySumStr();
-            foreach (var stock in stockViews)
+            stockInfoTextBox.Clear();      
+            foreach (var r in stockViews)
             {
-                string info = GetStockShowStr(stock);
-                stockInfoTextBox.SelectionColor = stock.Color;
+                SetToDayTMoney(r);
+                string info = GetStockShowStr(r);
+                stockInfoTextBox.SelectionColor = r.Color;
                 stockInfoTextBox.AppendText(info);
             }
+            SetTodaySumStr();
         }
 
         private void SetTodaySumStr()
@@ -232,7 +285,11 @@ namespace StockMonitor
                     .Replace("#money", sum.ToString("F2"))
                     .Replace("#rate", rate.ToString());
                 stockInfoTextBox.SelectionColor = sum > 0 ? Color.Red : sum < 0 ? Color.Green : Color.White;
-                stockInfoTextBox.AppendText(result);
+                // 设置选择起始位置为 0，即文本开头
+                stockInfoTextBox.SelectionStart = 0;
+                // 将文本插入到当前选择位置，也就是开头
+                stockInfoTextBox.SelectedText = result;
+                //stockInfoTextBox.AppendText(result);
             }
         }
 
@@ -296,7 +353,7 @@ namespace StockMonitor
                         r.Position = stock.Position;
                         r.Cost = stock.Cost;
                     }
-                    SetToDayTMoney(r);
+                    
                     return r;
                 }
             }
@@ -309,11 +366,45 @@ namespace StockMonitor
             var tlist = stocks.Where(x => x.Code == t.Code && x.IncreaseTime != 0);
             if (tlist.Any())
             {
+                var addcostmoney = 0M;
+                var reducecostmoney = 0M;
+                var addposition = 0;
+                var reduceposition = 0;
                 var price = t.Price;
                 var Tmoney = 0M;
                 foreach (var item in tlist)
                 {
-                    Tmoney+=item.IncreaseTime>0 ? item.Position * (price - item.Cost) : item.Position * (item.Cost - price);
+                    if (item.IncreaseTime>0)
+                    {
+                        addcostmoney += (item.Position * item.Cost);
+                        addposition += item.Position;
+                    }
+                    else
+                    {
+                        reducecostmoney += (item.Position * item.Cost);
+                        reduceposition += item.Position;
+                    }
+                }
+                if (addposition == reduceposition)
+                {
+                    Tmoney = reducecostmoney - addcostmoney;
+                }
+                else if (addposition < reduceposition)
+                {
+                    //减仓
+                    Tmoney = (price - addcostmoney) * Math.Abs(addposition);
+                }
+                else
+                {
+                    //加仓
+                    //加仓的平均价
+                    var cost= addcostmoney/addposition;
+                    if (reduceposition>0)
+                    {
+                        Tmoney += reducecostmoney - cost * reduceposition;
+                    }
+                    Tmoney += (price - cost) * (addposition - reduceposition);
+                    
                 }
                 t.NowTMoney = Tmoney;
             }
