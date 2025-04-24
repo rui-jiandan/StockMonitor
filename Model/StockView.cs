@@ -94,11 +94,11 @@ namespace StockMonitor.Model
         /// 当前持仓盈亏
         /// </summary>
         [Description("makemoney")]
-        public string NowMakeMoney
+        public decimal NowMakeMoney
         {
             get
             {
-                return Position > 0 ? (Change * Position+ NowTMoney).ToString("F2") : "";
+                return Position > 0 ? Change * Position + NowTMoney : 0.1111111M;
             }
         }
 

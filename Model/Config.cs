@@ -63,5 +63,11 @@ namespace StockMonitor.Model
         /// 今日汇总显示格式信息
         /// </summary>
         public string ShowTodaySumFormat { get; set; }
+
+        /// <summary>
+        /// 排序规则
+        /// 排序字段
+        /// </summary>
+        public string OrderBy { get; set; }
     }
 }

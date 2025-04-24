@@ -1,5 +1,6 @@
 {
   "ShowFormat": "#name #price #change #rate% #makemoney \r\n",
   "RefreshTime": 2000,
-  "ShowTodaySumFormat": "今日盈亏:#money, 今日比例 #rate% \r\n"
+  "ShowTodaySumFormat": "今日盈亏:#money, 今日比例 #rate% \r\n",
+  "OrderBy": "makemoney desc"
 }

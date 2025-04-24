@@ -28,11 +28,13 @@ namespace StockMonitor
         private TransparentRichTextBox stockInfoTextBox;
         private List<StockView> stockViews = new List<StockView>();
         private PropertyInfo[] viewproperties = null;
+        private Dictionary<string, PropertyInfo> viewpropertiesdic = null;
         private ConfigV1 config = null;
 
         public MainForm()
         {
             InitializeComponent();
+            InitViewProperties();
             this.Icon = new Icon("icon.ico");
             // 移除放大、缩小和关闭按钮，仅保留系统托盘菜单
             this.FormBorderStyle = FormBorderStyle.None;
@@ -57,8 +59,21 @@ namespace StockMonitor
             this.BackColor = Color.LimeGreen;
             this.Opacity = 0.5;
             // 设置主窗体置顶
-            this.TopMost = true;
-            viewproperties=typeof(StockView).GetProperties();
+            this.TopMost = true;            
+        }
+
+        private void InitViewProperties()
+        {
+            viewproperties = typeof(StockView).GetProperties();
+            viewpropertiesdic = new Dictionary<string, PropertyInfo>();
+            foreach (var property in viewproperties)
+            {
+                var descriptionAttribute = property.GetCustomAttribute<DescriptionAttribute>();
+                if (descriptionAttribute != null)
+                {
+                    viewpropertiesdic[descriptionAttribute.Description] = property;
+                }
+            }
         }
 
 
@@ -264,7 +279,8 @@ namespace StockMonitor
         {
             // 记录当前滚动条位置
             int scrollPosition = stockInfoTextBox.GetScrollPosition();
-            stockInfoTextBox.Clear();      
+            stockInfoTextBox.Clear();
+            StockViewSort();
             foreach (var r in stockViews)
             {
                 SetToDayTMoney(r);
@@ -276,6 +292,48 @@ namespace StockMonitor
             // 恢复滚动条位置
             stockInfoTextBox.SetScrollPosition(scrollPosition);
         }
+
+        private void StockViewSort()
+        {
+            if (string.IsNullOrEmpty(config?.OrderBy)) return;
+
+            // 解析 orderbystr，例如 "name desc,code asc"
+            var orderClauses = config.OrderBy.Split(',')
+                .Select(clause => clause.Trim().Split(' '))
+                .Select(parts => new { Field = parts[0], IsDescending = parts.Length > 1 && parts[1].Equals("desc", StringComparison.OrdinalIgnoreCase) })
+                .ToList();
+
+            // 动态排序
+            IOrderedEnumerable<StockView> sortedStockViews = null;
+
+            foreach (var clause in orderClauses)
+            {
+                if (!viewpropertiesdic.TryGetValue(clause.Field,out var property))
+                {
+                    continue;
+                }
+                // 排序逻辑
+                if (sortedStockViews == null)
+                {
+                    sortedStockViews = clause.IsDescending
+                        ? stockViews.OrderByDescending(x => property.GetValue(x))
+                        : stockViews.OrderBy(x => property.GetValue(x));
+                }
+                else
+                {
+                    sortedStockViews = clause.IsDescending
+                        ? sortedStockViews.ThenByDescending(x => property.GetValue(x))
+                        : sortedStockViews.ThenBy(x => property.GetValue(x));
+                }
+            }
+
+            // 更新排序后的列表
+            if (sortedStockViews != null)
+            {
+                stockViews = sortedStockViews.ToList();
+            }
+        }
+
 
         private void SetTodaySumStr()
         {
@@ -300,20 +358,33 @@ namespace StockMonitor
         private string GetStockShowStr(StockView stockView)
         {
             string result = config.ShowFormat;
-            foreach (var property in viewproperties)
+            foreach (var item in viewpropertiesdic)
             {
-                var descriptionAttribute = property.GetCustomAttribute<DescriptionAttribute>();
-                if (descriptionAttribute != null)
+                string placeholder = $"#{item.Key}";
+                var valuestr = item.Value.GetValue(stockView)?.ToString();
+                if (valuestr != null)
                 {
-                    string placeholder = $"#{descriptionAttribute.Description}";
-                    var valuestr = property.GetValue(stockView)?.ToString();
-                    if (valuestr != null)
-                    {
-                        result = result.Replace(placeholder, valuestr);
-                    }
+                    if (item.Key == "makemoney") valuestr = FormatDecimalStr(valuestr);
+                    result = result.Replace(placeholder, valuestr);
                 }
             }
             return result;
+        }
+
+        /// <summary>
+        /// 格式化数字字符串
+        /// </summary>
+        /// <param name="valuestr">原字符串</param>
+        /// <param name="emptystr">当做空字符串处理</param>
+        /// <returns></returns>
+        private string FormatDecimalStr(string valuestr,string emptystr= "0.1111111")
+        {
+            if (string.IsNullOrEmpty(valuestr) || emptystr == valuestr) return string.Empty;
+            if(decimal.TryParse(valuestr, out decimal value))
+            {
+               return value.ToString("F2");
+            }
+            return valuestr;
         }
 
         /// <summary>
