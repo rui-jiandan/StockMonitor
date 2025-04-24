@@ -103,6 +103,10 @@ namespace StockMonitor
             notifyIcon = new NotifyIcon();
             contextMenuStrip = new ContextMenuStrip();
 
+            ToolStripMenuItem editConfigMenuItem = new ToolStripMenuItem("编辑配置");
+            editConfigMenuItem.Click += EditConfigMenuItem_Click;
+            contextMenuStrip.Items.Add(editConfigMenuItem);
+
             ToolStripMenuItem editDeleteStockMenuItem = new ToolStripMenuItem("操作");
             editDeleteStockMenuItem.Click += EditDeleteStockMenuItem_Click;
             contextMenuStrip.Items.Add(editDeleteStockMenuItem);
@@ -122,6 +126,17 @@ namespace StockMonitor
             notifyIcon.DoubleClick += NotifyIcon_DoubleClick;
             this.Hide();
         }
+
+        private void EditConfigMenuItem_Click(object sender, EventArgs e)
+        {
+            EditConfigForm editConfigForm = new EditConfigForm(config);
+            if (editConfigForm.ShowDialog() == DialogResult.OK)
+            {
+                SaveConfigToFile();
+                UpdateUI();
+            }
+        }
+
 
         private void EditDeleteStockMenuItem_Click(object sender, EventArgs e)
         {
@@ -224,7 +239,27 @@ namespace StockMonitor
                 string json = File.ReadAllText(configFilePath);
                 config = JsonSerializer.Deserialize<ConfigV1>(json);
             }
+            else
+            {
+                // 初始化默认配置
+                config = new ConfigV1
+                {
+                    ShowFormat = "#name #price #change #rate% #makemoney \r\n",
+                    RefreshTime = 2000,
+                    ShowTodaySumFormat = "今日盈亏:#money, 今日比例 #rate% \r\n",
+                    OrderBy = "name asc"
+                };
+                SaveConfigToFile();
+            }
         }
+
+        private void SaveConfigToFile()
+        {
+            string json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(configFilePath, json);
+        }
+
+
 
         private async void StartDataRefresh()
         {
