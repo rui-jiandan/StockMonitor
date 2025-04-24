@@ -262,6 +262,8 @@ namespace StockMonitor
 
         private void UpdateUI()
         {
+            // 记录当前滚动条位置
+            int scrollPosition = stockInfoTextBox.GetScrollPosition();
             stockInfoTextBox.Clear();      
             foreach (var r in stockViews)
             {
@@ -271,6 +273,8 @@ namespace StockMonitor
                 stockInfoTextBox.AppendText(info);
             }
             SetTodaySumStr();
+            // 恢复滚动条位置
+            stockInfoTextBox.SetScrollPosition(scrollPosition);
         }
 
         private void SetTodaySumStr()
