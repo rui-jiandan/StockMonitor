@@ -82,6 +82,7 @@ namespace StockMonitor.Model
         /// <summary>
         /// 股票颜色
         /// </summary>
+        [Description("color")]
         public Color Color
         {
             get
@@ -98,7 +99,7 @@ namespace StockMonitor.Model
         {
             get
             {
-                return Position > 0 ? Change * Position + NowTMoney : 0.1111111M;
+                return Position > 0 ? Change * Position + NowTMoney : 0;
             }
         }
 
@@ -107,5 +108,23 @@ namespace StockMonitor.Model
         /// </summary>
         [Description("tmoney")]
         public decimal NowTMoney { get; set; }
+
+        /// <summary>
+        /// 是否持仓
+        /// </summary>
+        [Description("havepos")]
+        public bool HavePosition => Position > 0;
+
+        /// <summary>
+        /// 持仓金额
+        /// </summary>
+        [Description("posmoney")]
+        public decimal PositionMoney=> Position * Price;
+
+        /// <summary>
+        /// 持仓成本金额
+        /// </summary>
+        [Description("poscostmoney")]
+        public decimal PositionCost=> Position > 0 ? Cost * Position : 0;
     }
 }

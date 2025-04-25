@@ -18,16 +18,19 @@ namespace StockMonitor.Model
         /// <summary>
         /// 持仓数量
         /// </summary>
+        [Description("position")]
         public int Position { get; set; }
 
         /// <summary>
         /// 持仓成本
         /// </summary>
+        [Description("cost")]
         public decimal Cost { get; set; }
 
         /// <summary>
         /// 加仓正，减仓负
         /// </summary>
+        [Description("intime")]
         public long IncreaseTime { get; set; }
     }
 }

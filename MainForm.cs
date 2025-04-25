@@ -330,20 +330,21 @@ namespace StockMonitor
 
         private void StockViewSort()
         {
-            if (string.IsNullOrEmpty(config?.OrderBy)) return;
-
+            if (string.IsNullOrEmpty(config?.OrderBy?.Trim())) return;
             // 解析 orderbystr，例如 "name desc,code asc"
             var orderClauses = config.OrderBy.Split(',')
                 .Select(clause => clause.Trim().Split(' '))
+                .Where(parts => parts.Length > 0 && !string.IsNullOrEmpty(parts[0]))
                 .Select(parts => new { Field = parts[0], IsDescending = parts.Length > 1 && parts[1].Equals("desc", StringComparison.OrdinalIgnoreCase) })
                 .ToList();
 
+            if (orderClauses.Count == 0) return;
             // 动态排序
             IOrderedEnumerable<StockView> sortedStockViews = null;
 
             foreach (var clause in orderClauses)
             {
-                if (!viewpropertiesdic.TryGetValue(clause.Field,out var property))
+                if (!viewpropertiesdic.TryGetValue(clause.Field, out var property))
                 {
                     continue;
                 }
@@ -380,10 +381,10 @@ namespace StockMonitor
                 var result = config.ShowTodaySumFormat;
                 result = result
                     .Replace("#money", sum.ToString("F2"))
-                    .Replace("#rate", rate.ToString());
-                stockInfoTextBox.SelectionColor = sum > 0 ? Color.Red : sum < 0 ? Color.Green : Color.White;
+                    .Replace("#rate", rate.ToString());                
                 // 设置选择起始位置为 0，即文本开头
                 stockInfoTextBox.SelectionStart = 0;
+                stockInfoTextBox.SelectionColor = sum > 0 ? Color.Red : sum < 0 ? Color.Green : Color.White;
                 // 将文本插入到当前选择位置，也就是开头
                 stockInfoTextBox.SelectedText = result;
                 //stockInfoTextBox.AppendText(result);
@@ -412,7 +413,7 @@ namespace StockMonitor
         /// <param name="valuestr">原字符串</param>
         /// <param name="emptystr">当做空字符串处理</param>
         /// <returns></returns>
-        private string FormatDecimalStr(string valuestr,string emptystr= "0.1111111")
+        private string FormatDecimalStr(string valuestr,string emptystr= "0")
         {
             if (string.IsNullOrEmpty(valuestr) || emptystr == valuestr) return string.Empty;
             if(decimal.TryParse(valuestr, out decimal value))
