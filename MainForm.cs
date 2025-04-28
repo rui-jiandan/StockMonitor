@@ -256,6 +256,7 @@ namespace StockMonitor
         private void SaveConfigToFile()
         {
             string json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+            Logger.LogDebug($"修改保存配置文件: {json}"); 
             File.WriteAllText(configFilePath, json);
         }
 

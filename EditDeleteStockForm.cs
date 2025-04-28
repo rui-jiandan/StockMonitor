@@ -157,6 +157,7 @@ namespace StockMonitor
                         this.DialogResult = DialogResult.OK;
                         this.Close();
                     }
+                    Logger.LogDebug($"修改 【{stockToEdit.Code}】 {stockToEdit.Position} {stockToEdit.Cost}");
                 }
             }
             else
@@ -178,6 +179,7 @@ namespace StockMonitor
                     Position = position,
                     Cost = cost
                 });
+                Logger.LogDebug($"增加 【{newCode}】 {position} {cost}");
                 this.DialogResult = DialogResult.OK;
                 this.Close();
             }
@@ -191,6 +193,7 @@ namespace StockMonitor
                 stocks.RemoveAll(s=> s.Code == selectedCode);
                 this.DialogResult = DialogResult.OK;
                 this.Close();
+                Logger.LogDebug($"删除 【{selectedCode}】");
             }
         }
 
@@ -221,6 +224,7 @@ namespace StockMonitor
                             Cost = cost,
                             IncreaseTime = isadd ? long.Parse(DateTime.Now.ToString("yyyyMMdd")) : long.Parse(DateTime.Now.ToString("yyyyMMdd")) * -1
                         });
+                        Logger.LogDebug($"{(isadd ? "加仓" : "减仓")} 【{selectedCode}】 {position} {cost}");
                         this.DialogResult = DialogResult.OK;
                         this.Close();
                     }
