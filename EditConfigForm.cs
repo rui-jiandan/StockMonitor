@@ -1,6 +1,7 @@
 ﻿using StockMonitor.Model;
 using System;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace StockMonitor
 {
@@ -15,8 +16,11 @@ namespace StockMonitor
 
             // 初始化控件值
             txtShowFormat.Text = config.ShowFormat;
+            txtShowFormat.Multiline = true;
+            txtShowFormat.Height = 40;
             txtRefreshTime.Text = config.RefreshTime.ToString();
             txtShowTodaySumFormat.Text = config.ShowTodaySumFormat;
+            txtShowTodaySumFormat.Multiline = true;
             txtOrderBy.Text = config.OrderBy;
         }
 

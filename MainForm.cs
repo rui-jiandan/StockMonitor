@@ -244,10 +244,10 @@ namespace StockMonitor
                 // 初始化默认配置
                 config = new ConfigV1
                 {
-                    ShowFormat = "#name #price #change #rate% #makemoney \r\n",
+                    ShowFormat = "#name(#code) #makemoney\r\n#price #change #rate%",
                     RefreshTime = 2000,
-                    ShowTodaySumFormat = "今日盈亏:#money, 今日比例 #rate% \r\n",
-                    OrderBy = "name asc"
+                    ShowTodaySumFormat = "今日盈亏:#money,今日比例 #rate%",
+                    OrderBy = "havepos desc,makemoney desc"
                 };
                 SaveConfigToFile();
             }
@@ -317,12 +317,17 @@ namespace StockMonitor
             int scrollPosition = stockInfoTextBox.GetScrollPosition();
             stockInfoTextBox.Clear();
             StockViewSort();
-            foreach (var r in stockViews)
+            for (int i = 0; i < stockViews.Count; i++)
             {
+                StockView r = stockViews[i];
                 SetToDayTMoney(r);
                 string info = GetStockShowStr(r);
                 stockInfoTextBox.SelectionColor = r.Color;
                 stockInfoTextBox.AppendText(info);
+                if (i < stockViews.Count - 1)
+                {
+                    stockInfoTextBox.AppendText(Environment.NewLine);
+                }
             }
             SetTodaySumStr();
             // 恢复滚动条位置
@@ -387,7 +392,7 @@ namespace StockMonitor
                 stockInfoTextBox.SelectionStart = 0;
                 stockInfoTextBox.SelectionColor = sum > 0 ? Color.Red : sum < 0 ? Color.Green : Color.White;
                 // 将文本插入到当前选择位置，也就是开头
-                stockInfoTextBox.SelectedText = result;
+                stockInfoTextBox.SelectedText = result+ Environment.NewLine;
                 //stockInfoTextBox.AppendText(result);
             }
         }
