@@ -12,6 +12,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -30,6 +31,7 @@ namespace StockMonitor
         private PropertyInfo[] viewproperties = null;
         private Dictionary<string, PropertyInfo> viewpropertiesdic = null;
         private ConfigV1 config = null;
+        private readonly SemaphoreSlim dataRefreshSemaphore = new SemaphoreSlim(1, 1);
 
         public MainForm()
         {
@@ -115,6 +117,10 @@ namespace StockMonitor
             showFormMenuItem.Click += ShowFormMenuItem_Click;
             contextMenuStrip.Items.Add(showFormMenuItem);
 
+            ToolStripMenuItem refreshMenuItem = new ToolStripMenuItem("刷新");
+            refreshMenuItem.Click += (sender, e) => dataRefreshSemaphore.Release(); // 触发数据刷新
+            contextMenuStrip.Items.Add(refreshMenuItem);
+
             ToolStripMenuItem exitMenuItem = new ToolStripMenuItem("退出");
             exitMenuItem.Click += ExitMenuItem_Click;
             contextMenuStrip.Items.Add(exitMenuItem);
@@ -133,7 +139,7 @@ namespace StockMonitor
             if (editConfigForm.ShowDialog() == DialogResult.OK)
             {
                 SaveConfigToFile();
-                UpdateUI();
+                dataRefreshSemaphore.Release();
             }
         }
 
@@ -144,7 +150,7 @@ namespace StockMonitor
             if (editDeleteStockForm.ShowDialog() == DialogResult.OK)
             {
                 SaveStocksToFile();
-                UpdateUI();
+                dataRefreshSemaphore.Release();
             }
         }
 
@@ -260,17 +266,24 @@ namespace StockMonitor
             File.WriteAllText(configFilePath, json);
         }
 
-
-
         private async void StartDataRefresh()
         {
             while (true)
             {
-                await RefreshStockData();
+                await dataRefreshSemaphore.WaitAsync(); // 等待信号量
+                try
+                {
+                    await RefreshStockData();
+                }
+                finally
+                {
+                    dataRefreshSemaphore.Release(); // 释放信号量
+                }
                 await Task.Delay(config.RefreshTime); // 根据配置文件设置刷新间隔
                 if (IsStop())
                 {
-                    break; 
+                    Logger.LogDebug($"刷新获取停止了");
+                    dataRefreshSemaphore.Wait();
                 }
             }
         }
