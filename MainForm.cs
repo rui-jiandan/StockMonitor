@@ -31,11 +31,22 @@ namespace StockMonitor
         private PropertyInfo[] viewproperties = null;
         private Dictionary<string, PropertyInfo> viewpropertiesdic = null;
         private ConfigV1 config = null;
-        private readonly SemaphoreSlim dataRefreshSemaphore = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim dataRefreshSemaphore = new SemaphoreSlim(1, 2);
 
         public MainForm()
         {
             InitializeComponent();
+            Application.ThreadException += (sender, e) =>
+            {
+                Logger.LogError($"ThreadException: {e.Exception.Message}", e.Exception);
+            }; 
+            AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+            {
+                if (e.ExceptionObject is Exception ex)
+                {
+                    Logger.LogError($"UnhandledException: {ex.Message}", ex);
+                }
+            };
             InitViewProperties();
             this.Icon = new Icon("icon.ico");
             // 移除放大、缩小和关闭按钮，仅保留系统托盘菜单
@@ -62,6 +73,11 @@ namespace StockMonitor
             this.Opacity = 0.5;
             // 设置主窗体置顶
             this.TopMost = true;            
+        }
+
+        private void Application_ThreadException(object sender, ThreadExceptionEventArgs e)
+        {
+            Logger.LogError($"Unhandled exception: {e.Exception.Message}", e.Exception);
         }
 
         private void InitViewProperties()
