@@ -28,9 +28,24 @@ namespace StockMonitor.Model
         public decimal Cost { get; set; }
 
         /// <summary>
-        /// 加仓正，减仓负
+        /// 操作集合
         /// </summary>
-        [Description("intime")]
-        public long IncreaseTime { get; set; }
+        public List<StockOperate> OpList { get; set; }
+    }
+
+    /// <summary>
+    /// 操作记录
+    /// </summary>
+    public class StockOperate
+    {
+        public enum OperationType { Buy, Sell }
+
+        public OperationType Type { get; set; }
+        public int Position { get; set; }
+        public decimal Price { get; set; }
+        public DateTime Time { get; set; }
+
+        public decimal Commission { get; set; } // 佣金
+        public decimal Tax { get; set; }        // 印花税（仅卖出）
     }
 }

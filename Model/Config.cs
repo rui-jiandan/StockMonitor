@@ -69,5 +69,15 @@ namespace StockMonitor.Model
         /// 排序字段
         /// </summary>
         public string OrderBy { get; set; }
+
+        /// <summary>
+        /// 佣金
+        /// </summary>
+        public decimal CommissionRate { get; set; }
+
+        /// <summary>
+        /// 印花税
+        /// </summary>
+        public decimal TaxRate { get; set; }
     }
 }

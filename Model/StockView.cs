@@ -99,7 +99,7 @@ namespace StockMonitor.Model
         {
             get
             {
-                return Position > 0 ? Change * Position + NowTMoney : 0;
+                return (Position > 0 ? Change * Position : 0) + NowTMoney;
             }
         }
 
@@ -113,7 +113,7 @@ namespace StockMonitor.Model
         /// 是否持仓
         /// </summary>
         [Description("havepos")]
-        public bool HavePosition => Position > 0;
+        public bool HavePosition => Position > 0 || NowTMoney != 0;
 
         /// <summary>
         /// 持仓金额

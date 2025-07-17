@@ -162,7 +162,7 @@ namespace StockMonitor
 
         private void EditDeleteStockMenuItem_Click(object sender, EventArgs e)
         {
-            EditDeleteStockForm editDeleteStockForm = new EditDeleteStockForm(stocks);
+            EditDeleteStockForm editDeleteStockForm = new EditDeleteStockForm(stocks,new StockCalculator(config.CommissionRate,config.TaxRate));
             if (editDeleteStockForm.ShowDialog() == DialogResult.OK)
             {
                 SaveStocksToFile();
@@ -199,51 +199,29 @@ namespace StockMonitor
             {
                 string json = File.ReadAllText(dataFilePath);
                 stocks = JsonSerializer.Deserialize<List<StockConfig>>(json);
-                UpdateStocksCost(stocks);
+                RemoveStockInvalidExpireOpList();
             }
         }
-
+        
         /// <summary>
-        /// 更新股票成本
+        /// 清除过期操作
         /// </summary>
-        private void UpdateStocksCost(List<StockConfig>  s)
+        private void RemoveStockInvalidExpireOpList()
         {
-            var time = long.Parse(DateTime.Now.ToString("yyyyMMdd"));
-            if (s.Any(x => x.IncreaseTime != 0&& time>Math.Abs(x.IncreaseTime)))
+            var today = DateTime.Today;
+            var isupdate = false;
+            foreach (var item in stocks)
             {
-                var codes = s.Where(x => x.IncreaseTime != 0).Select(x => x.Code).Distinct();
-                var newsotcks = new List<StockConfig>();
-                foreach (var item in codes)
+                if (item.OpList != null && item.OpList.Count > 0)
                 {
-                    var codelist = stocks.Where(x => x.Code == item).ToList();
-                    if (codelist.Any())
+                    if(item.OpList.RemoveAll(x => x.Time.Date != today) > 0)
                     {
-                        var costmoney = 0M;
-                        var position = 0;
-                        foreach (var r in codelist)
-                        {
-                            if (r.IncreaseTime >= 0)
-                            {
-                                costmoney += r.Cost * r.Position;
-                                position += r.Position;
-                            }
-                            else
-                            {
-                                costmoney -= r.Cost * r.Position;
-                                position -= r.Position;
-                            }
-                        }
-                        newsotcks.Add(new StockConfig
-                        {
-                            Code = item,
-                            Cost = costmoney / position,
-                            Position = position,
-                            IncreaseTime = 0
-                        });
+                        isupdate = true;
                     }
                 }
-                stocks.RemoveAll(x => codes.Contains(x.Code));
-                stocks.AddRange(newsotcks);
+            }
+            if (isupdate)
+            {
                 SaveStocksToFile();
             }
         }
@@ -269,7 +247,9 @@ namespace StockMonitor
                     ShowFormat = "#name(#code) #makemoney\r\n#price #change #rate%",
                     RefreshTime = 2000,
                     ShowTodaySumFormat = "今日盈亏:#money,今日比例 #rate%",
-                    OrderBy = "havepos desc,makemoney desc"
+                    OrderBy = "havepos desc,makemoney desc",
+                    CommissionRate = 0.0003m,
+                    TaxRate = 0,
                 };
                 SaveConfigToFile();
             }
@@ -408,7 +388,7 @@ namespace StockMonitor
 
         private void SetTodaySumStr()
         {
-            if (!string.IsNullOrEmpty(config?.ShowTodaySumFormat) && stockViews.Any(x => x.Position > 0))
+            if (!string.IsNullOrEmpty(config?.ShowTodaySumFormat) && stockViews.Any(x => x.Position > 0 || x.NowTMoney != 0))
             {
                 var sum = stockViews.Sum(x => x.Change * x.Position+ x.NowTMoney);
                 var sumcost = stockViews.Sum(x => x.Cost * x.Position);
@@ -493,11 +473,12 @@ namespace StockMonitor
                         LowPrice = decimal.Parse(dataParts[5]),
                         YestClose=decimal.Parse(dataParts[2]),
                     };
-                    StockConfig stock = stocks.FirstOrDefault(s => s.IncreaseTime==0&&s.Code==r.Code);
+                    StockConfig stock = stocks.FirstOrDefault(s => s.Code==r.Code);
                     if (stock != null)
                     {
                         r.Position = stock.Position;
                         r.Cost = stock.Cost;
+                        r.OpList = stock.OpList;
                     }
                     
                     return r;
@@ -509,51 +490,7 @@ namespace StockMonitor
         private void SetToDayTMoney(StockView t)
         {
             if (t == null) return;
-            var tlist = stocks.Where(x => x.Code == t.Code && x.IncreaseTime != 0);
-            if (tlist.Any())
-            {
-                var addcostmoney = 0M;
-                var reducecostmoney = 0M;
-                var addposition = 0;
-                var reduceposition = 0;
-                var price = t.Price;
-                var Tmoney = 0M;
-                foreach (var item in tlist)
-                {
-                    if (item.IncreaseTime>0)
-                    {
-                        addcostmoney += (item.Position * item.Cost);
-                        addposition += item.Position;
-                    }
-                    else
-                    {
-                        reducecostmoney += (item.Position * item.Cost);
-                        reduceposition += item.Position;
-                    }
-                }
-                if (addposition == reduceposition)
-                {
-                    Tmoney = reducecostmoney - addcostmoney;
-                }
-                else if (addposition < reduceposition)
-                {
-                    //减仓
-                    Tmoney = (price - addcostmoney) * Math.Abs(addposition);
-                }
-                else
-                {
-                    //加仓
-                    //加仓的平均价
-                    var cost= addcostmoney/addposition;
-                    if (reduceposition>0)
-                    {
-                        Tmoney += reducecostmoney - cost * reduceposition;
-                    }
-                    Tmoney += (price - cost) * (addposition - reduceposition);
-                    
-                }
-                t.NowTMoney = Tmoney;
-            }
+            t.NowTMoney = StockCalculator.GetTodayMoney(t, t.Price);
         }
 
         #region 窗体事件

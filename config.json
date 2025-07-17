@@ -2,5 +2,7 @@
   "ShowFormat": "#name(#code) #makemoney\r\n#price #change #rate%",
   "RefreshTime": 2000,
   "ShowTodaySumFormat": "今日盈亏:#money,今日比例 #rate%",
-  "OrderBy": "havepos desc,makemoney desc"
+  "OrderBy": "havepos desc,makemoney desc",
+  "CommissionRate": 0.00023,
+  "TaxRate": 0
 }

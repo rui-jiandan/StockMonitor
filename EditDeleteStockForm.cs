@@ -10,6 +10,7 @@ namespace StockMonitor
     public partial class EditDeleteStockForm : Form
     {
         private List<StockConfig> stocks;
+        private StockCalculator Calculator;
         private ComboBox stockComboBox;
         private TextBox positionTextBox;
         private TextBox costTextBox;
@@ -18,9 +19,10 @@ namespace StockMonitor
         private Button addPositionButton;
         private Button reducePositionButton;
 
-        public EditDeleteStockForm(List<StockConfig> stocks)
+        public EditDeleteStockForm(List<StockConfig> stocks, StockCalculator calculator)
         {
             this.stocks = stocks;
+            Calculator = calculator;
             InitializeComponents();
         }
 
@@ -38,10 +40,6 @@ namespace StockMonitor
             stockComboBox.Size = new Size(170, 20);
             foreach (StockConfig stock in stocks)
             {
-                if (stock.IncreaseTime != 0)
-                {
-                    continue;                    
-                }
                 stockComboBox.Items.Add(stock.Code);
             }
             if (stockComboBox.Items.Count > 0)
@@ -122,7 +120,7 @@ namespace StockMonitor
             }
             if (string.IsNullOrEmpty(code))
                 return;
-            StockConfig stock = stocks.FirstOrDefault(s => s.Code == code && s.IncreaseTime == 0);
+            StockConfig stock = stocks.FirstOrDefault(s => s.Code == code);
             if (stock != null)
             {
                 positionTextBox.Text = stock.Position.ToString();
@@ -140,7 +138,7 @@ namespace StockMonitor
             if (stockComboBox.SelectedIndex >= 0)
             {
                 string selectedCode = stockComboBox.SelectedItem.ToString();
-                StockConfig stockToEdit = stocks.FirstOrDefault(s => s.Code == selectedCode && s.IncreaseTime == 0);
+                StockConfig stockToEdit = stocks.FirstOrDefault(s => s.Code == selectedCode);
                 if (stockToEdit != null)
                 {
                     if (int.TryParse(positionTextBox.Text, out var position) && decimal.TryParse(costTextBox.Text, out var cost))
@@ -217,13 +215,15 @@ namespace StockMonitor
                 {
                     if (int.TryParse(positionTextBox.Text, out var position) && decimal.TryParse(costTextBox.Text, out var cost))
                     {
-                        stocks.Add(new StockConfig
+
+                        if (isadd)
                         {
-                            Code = selectedCode,
-                            Position = position,
-                            Cost = cost,
-                            IncreaseTime = isadd ? long.Parse(DateTime.Now.ToString("yyyyMMdd")) : long.Parse(DateTime.Now.ToString("yyyyMMdd")) * -1
-                        });
+                            Calculator.AddPosition(stockToAddPosition, cost, position);
+                        }
+                        else
+                        {
+                            Calculator.ReducePosition(stockToAddPosition, cost, position);
+                        }
                         Logger.LogDebug($"{(isadd ? "加仓" : "减仓")} 【{selectedCode}】 {position} {cost}");
                         this.DialogResult = DialogResult.OK;
                         this.Close();
