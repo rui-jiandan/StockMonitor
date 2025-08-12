@@ -205,7 +205,7 @@ namespace StockMonitor
             ChangePosition(false);
         }
 
-        private void ChangePosition(bool isadd=true)
+        private void ChangePosition(bool isadd = true)
         {
             if (stockComboBox.SelectedIndex >= 0)
             {
@@ -229,6 +229,37 @@ namespace StockMonitor
                         this.Close();
                     }
                 }
+            }
+            else if (!string.IsNullOrEmpty(stockComboBox.Text))
+            {
+                string newCode = stockComboBox.Text.Trim();
+                if (string.IsNullOrEmpty(newCode)) { return; }
+                if (!int.TryParse(positionTextBox.Text, out var position))
+                {
+                    position = 0;
+                }
+                if (!decimal.TryParse(costTextBox.Text, out var cost))
+                {
+                    cost = 0;
+                }
+                StockConfig newStock = new StockConfig
+                {
+                    Code = newCode,
+                    Position = 0,
+                    Cost = cost
+                };
+                if (isadd)
+                {
+                    Calculator.AddPosition(newStock, cost, position);
+                }
+                else
+                {
+                    Calculator.ReducePosition(newStock, cost, position);
+                }
+                stocks.Add(newStock);
+                Logger.LogDebug($"{(isadd ? "加仓" : "减仓")} 【{newCode}】 {position} {cost}");
+                this.DialogResult = DialogResult.OK;
+                this.Close();
             }
         }
     }

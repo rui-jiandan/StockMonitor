@@ -214,9 +214,22 @@ namespace StockMonitor
             {
                 if (item.OpList != null && item.OpList.Count > 0)
                 {
-                    if(item.OpList.RemoveAll(x => x.Time.Date != today) > 0)
+                    var addposition = 0;
+                    var addcost = 0M;
+                    foreach (var op in item.OpList)
+                    {
+                        if (op.Type == StockOperate.OperationType.Buy && op.Time.Date != today)
+                        {
+                            //非今日加仓
+                            addposition += op.Position;
+                            addcost += op.Position * op.Price + op.Commission + op.Tax;
+                        }
+                    }
+                    if (item.OpList.RemoveAll(x => x.Time.Date != today) > 0)
                     {
                         isupdate = true;
+                        item.Position += addposition;
+                        item.Cost = (item.Cost * item.Position + addposition) / item.Position;
                     }
                 }
             }

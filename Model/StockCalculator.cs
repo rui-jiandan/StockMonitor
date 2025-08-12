@@ -24,14 +24,19 @@ namespace StockMonitor.Model
             if (buyQuantity <= 0)
                 throw new ArgumentException("加仓数量必须大于0");
 
-            // 计算新持仓总成本
-            decimal totalCost = config.Cost * config.Position + buyPrice * buyQuantity;
-            config.Position += buyQuantity;
-            config.Cost = totalCost / config.Position;
+            //当日的操作,另外计算
+            //decimal totalCost = config.Cost * config.Position + buyPrice * buyQuantity;
+            //config.Position += buyQuantity;
+            //config.Cost = totalCost / config.Position;
 
             // 计算佣金
             decimal turnover = buyPrice * buyQuantity;
             decimal commission = turnover * _commissionRate;
+            if (commission < 5)
+            {
+                //不满5元收5元
+                commission = 5;
+            }
             if (config.OpList == null)
             {
                 config.OpList = new List<StockOperate>();
@@ -155,6 +160,8 @@ namespace StockMonitor.Model
                     int quantity = Math.Abs(op.Position);
                     if (op.Type == StockOperate.OperationType.Buy)
                     {
+                        //今日买入盈亏 = (当前价 - 买入价) * 数量
+                        realizedPnL += (currentPrice - op.Price) * quantity;
                         totalCommission += op.Commission;
                     }
                     else if (op.Type == StockOperate.OperationType.Sell)
