@@ -228,8 +228,9 @@ namespace StockMonitor
                     if (item.OpList.RemoveAll(x => x.Time.Date != today) > 0)
                     {
                         isupdate = true;
+                        var totalCost = item.Cost * item.Position + addcost;
                         item.Position += addposition;
-                        item.Cost = (item.Cost * item.Position + addposition) / item.Position;
+                        item.Cost = totalCost / item.Position;
                     }
                 }
             }
