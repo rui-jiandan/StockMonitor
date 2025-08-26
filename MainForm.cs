@@ -230,7 +230,7 @@ namespace StockMonitor
                         isupdate = true;
                         var totalCost = item.Cost * item.Position + addcost;
                         item.Position += addposition;
-                        item.Cost = totalCost / item.Position;
+                        item.Cost = item.Position > 0 ? totalCost / item.Position : 0;
                     }
                 }
             }
