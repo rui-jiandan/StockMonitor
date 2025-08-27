@@ -493,6 +493,7 @@ namespace StockMonitor
                         r.Position = stock.Position;
                         r.Cost = stock.Cost;
                         r.OpList = stock.OpList;
+                        stock.Name = r.Name;
                     }
                     
                     return r;

@@ -18,12 +18,7 @@ namespace StockMonitor.Model
         /// 股票代码全称
         /// </summary>
         [Description("fullcode")]
-        public string FullCode { get; set; }
-        /// <summary>
-        /// 股票名称
-        /// </summary>
-        [Description("name")]
-        public string Name { get; set; }
+        public string FullCode { get; set; }        
 
         /// <summary>
         /// 股票价格

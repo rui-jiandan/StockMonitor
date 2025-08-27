@@ -10,6 +10,12 @@ namespace StockMonitor.Model
     public class StockConfig
     {
         /// <summary>
+        /// 股票名称
+        /// </summary>
+        [Description("name")]
+        public string Name { get; set; }
+
+        /// <summary>
         /// 股票代码 纯数字
         /// </summary>
         [Description("code")]

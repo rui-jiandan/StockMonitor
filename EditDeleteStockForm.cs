@@ -38,9 +38,10 @@ namespace StockMonitor
 
             stockComboBox.Location = new Point(10, 10);
             stockComboBox.Size = new Size(170, 20);
-            foreach (StockConfig stock in stocks)
+            for (int i = 0; i < stocks.Count; i++)
             {
-                stockComboBox.Items.Add(stock.Code);
+                StockConfig stock = stocks[i];
+                stockComboBox.Items.Add($"{stock.Name}({stock.Code})");
             }
             if (stockComboBox.Items.Count > 0)
             {
@@ -109,19 +110,8 @@ namespace StockMonitor
 
         private void ShowStockInfo()
         {
-            var code = string.Empty;
-            if (stockComboBox.SelectedIndex >= 0)
-            {
-                code= stockComboBox.SelectedItem.ToString();
-                string selectedCode = stockComboBox.SelectedItem.ToString();
-            }else if (!string.IsNullOrEmpty(stockComboBox.Text))
-            {
-                code = stockComboBox.Text.Trim();
-            }
-            if (string.IsNullOrEmpty(code))
-                return;
-            StockConfig stock = stocks.FirstOrDefault(s => s.Code == code);
-            if (stock != null)
+            var stock = GetStockInfoBySelected(stockComboBox.SelectedIndex);
+            if (stock!=null)
             {
                 positionTextBox.Text = stock.Position.ToString();
                 costTextBox.Text = stock.Cost.ToString();
@@ -133,12 +123,20 @@ namespace StockMonitor
             }
         }
 
+        private StockConfig GetStockInfoBySelected(int SelectedIndex)
+        {
+            if (SelectedIndex >= 0 && stocks.Count > SelectedIndex)
+            {
+                return stocks[SelectedIndex];
+            }
+            return null;
+        }
+
         private void EditButton_Click(object sender, EventArgs e)
         {
             if (stockComboBox.SelectedIndex >= 0)
             {
-                string selectedCode = stockComboBox.SelectedItem.ToString();
-                StockConfig stockToEdit = stocks.FirstOrDefault(s => s.Code == selectedCode);
+                StockConfig stockToEdit = GetStockInfoBySelected(stockComboBox.SelectedIndex);
                 if (stockToEdit != null)
                 {
                     if (int.TryParse(positionTextBox.Text, out var position) && decimal.TryParse(costTextBox.Text, out var cost))
@@ -188,7 +186,8 @@ namespace StockMonitor
             if (stockComboBox.SelectedIndex >= 0)
             {
                 string selectedCode = stockComboBox.SelectedItem.ToString();
-                stocks.RemoveAll(s=> s.Code == selectedCode);
+                var stock = GetStockInfoBySelected(stockComboBox.SelectedIndex);
+                stocks.Remove(stock);
                 this.DialogResult = DialogResult.OK;
                 this.Close();
                 Logger.LogDebug($"删除 【{selectedCode}】");
@@ -210,7 +209,7 @@ namespace StockMonitor
             if (stockComboBox.SelectedIndex >= 0)
             {
                 string selectedCode = stockComboBox.SelectedItem.ToString();
-                StockConfig stockToAddPosition = stocks.FirstOrDefault(s => s.Code == selectedCode);
+                StockConfig stockToAddPosition = GetStockInfoBySelected(stockComboBox.SelectedIndex); ;
                 if (stockToAddPosition != null)
                 {
                     if (int.TryParse(positionTextBox.Text, out var position) && decimal.TryParse(costTextBox.Text, out var cost))
