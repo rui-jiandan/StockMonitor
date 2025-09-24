@@ -339,11 +339,15 @@ namespace StockMonitor
             // 记录当前滚动条位置
             int scrollPosition = stockInfoTextBox.GetScrollPosition();
             stockInfoTextBox.Clear();
-            StockViewSort();
             for (int i = 0; i < stockViews.Count; i++)
             {
                 StockView r = stockViews[i];
                 SetToDayTMoney(r);
+            }
+            StockViewSort();
+            for (int i = 0; i < stockViews.Count; i++)
+            {
+                StockView r = stockViews[i];
                 string info = GetStockShowStr(r);
                 stockInfoTextBox.SelectionColor = r.Color;
                 stockInfoTextBox.AppendText(info);
