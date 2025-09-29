@@ -410,7 +410,7 @@ namespace StockMonitor
             {
                 var sum = stockViews.Sum(x => x.Change * x.Position+ x.NowTMoney);
                 var sumcost = stockViews.Sum(x => x.Cost * x.Position);
-                var rate = Math.Round((sum / sumcost) * 100, 2);
+                var rate = sumcost > 0 ? Math.Round((sum / sumcost) * 100, 2) : 0;
                 var result = config.ShowTodaySumFormat;
                 result = result
                     .Replace("#money", sum.ToString("F2"))
