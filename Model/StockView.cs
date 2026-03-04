@@ -58,6 +58,7 @@ namespace StockMonitor.Model
         {
             get
             {
+                if (Price == 0) return 0;
                 return Price - YestClose;
             }
         }
