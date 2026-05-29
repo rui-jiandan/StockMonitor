@@ -1,0 +1,69 @@
+<Window x:Class="StockMonitor.UI.Views.AlertManageDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="预警管理" Width="400" Height="380"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Background="#F0F0F0">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ListBox Grid.Row="0" ItemsSource="{Binding Rules}" Height="150">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding StockCode}" Margin="0,0,8,0"/>
+                        <TextBlock Text="{Binding Type}" Margin="0,0,8,0"/>
+                        <TextBlock Text="{Binding Threshold}" Margin="0,0,8,0"/>
+                        <TextBlock Margin="0,0,8,0">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0}">
+                                    <Binding Path="IsOneTime"/>
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                        <Button Content="删除" CommandParameter="{Binding}"
+                                Command="{Binding DataContext.DeleteRuleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                Margin="8,0,0,0" Padding="4,0"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel Grid.Row="1" Margin="0,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="股票代码:" VerticalAlignment="Center" Margin="0,2"/>
+                <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding StockCodes}"
+                          SelectedItem="{Binding SelectedStockCode}" Margin="4,2"/>
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="预警类型:" VerticalAlignment="Center" Margin="0,2"/>
+                <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding AlertTypes}"
+                          SelectedItem="{Binding SelectedAlertType}" Margin="4,2"/>
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="阈值:" VerticalAlignment="Center" Margin="0,2"/>
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding ThresholdText}" Margin="4,2"/>
+
+                <CheckBox Grid.Row="3" Grid.Column="1" Content="一次性" IsChecked="{Binding IsOneTime}" Margin="4,2"/>
+            </Grid>
+        </StackPanel>
+
+        <Button Grid.Row="2" Content="添加规则" Command="{Binding AddRuleCommand}"
+                HorizontalAlignment="Left" Padding="16,4" Margin="0,8,0,0"/>
+    </Grid>
+</Window>

@@ -1,0 +1,10 @@
+{
+  "showFormat": "#name(#code) #makemoney\r\n#price #change #rate%",
+  "refreshTime": 2000,
+  "showTodaySumFormat": "今日盈亏:#money,今日比例 #rate%",
+  "orderBy": "havepos desc,makemoney desc",
+  "commissionRate": 0.00023,
+  "taxRate": 0,
+  "primaryDataSource": "Sina",
+  "fallbackDataSource": "Tencent"
+}

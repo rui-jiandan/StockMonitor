@@ -1,0 +1,30 @@
+[
+  {
+    "code": "sh600036",
+    "name": "",
+    "quantity": 300,
+    "avgCostPrice": 43.267,
+    "todayTrades": []
+  },
+  {
+    "code": "sz512890",
+    "name": "",
+    "quantity": 16100,
+    "avgCostPrice": 1.112,
+    "todayTrades": []
+  },
+  {
+    "code": "sh601127",
+    "name": "",
+    "quantity": 100,
+    "avgCostPrice": 133.375,
+    "todayTrades": []
+  },
+  {
+    "code": "sz159941",
+    "name": "",
+    "quantity": 0,
+    "avgCostPrice": 0,
+    "todayTrades": []
+  }
+]
