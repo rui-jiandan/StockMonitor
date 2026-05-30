@@ -87,9 +87,9 @@ public class PnLCalculatorTests
 
         var (realized, unrealized, total) = PnLCalculator.CalculateTodayPnL(position, quote);
 
-        realized.Should().Be(180m);
-        unrealized.Should().Be(395m);
-        total.Should().Be(575m);
+        realized.Should().Be(185m);
+        unrealized.Should().Be(145m);
+        total.Should().Be(330m);
     }
 
     [Fact]
@@ -105,9 +105,9 @@ public class PnLCalculatorTests
 
         var (realized, unrealized, total) = PnLCalculator.CalculateTodayPnL(position, quote);
 
-        realized.Should().Be(180m);
-        unrealized.Should().Be(1045m);
-        total.Should().Be(1225m);
+        realized.Should().Be(185m);
+        unrealized.Should().Be(395m);
+        total.Should().Be(580m);
     }
 
     [Fact]
@@ -123,20 +123,20 @@ public class PnLCalculatorTests
 
         var (realized, unrealized, total) = PnLCalculator.CalculateTodayPnL(position, quote);
 
-        realized.Should().Be(-6m);
+        realized.Should().Be(0m);
         unrealized.Should().Be(594m);
-        total.Should().Be(588m);
+        total.Should().Be(594m);
     }
 
     [Fact]
-    public void GetTodayMoney_NoTrades_ReturnsZero()
+    public void GetTodayMoney_NoTrades_ReturnsTodayUnrealized()
     {
         var position = CreatePosition(100, 10.0m);
         var quote = CreateQuote(11.0m, 10.0m);
 
         var money = PnLCalculator.GetTodayMoney(position, quote);
 
-        money.Should().Be(0m);
+        money.Should().Be(100m);
     }
 
     [Fact]
@@ -163,6 +163,19 @@ public class PnLCalculatorTests
             CreateBuyTrade(100, 9.0m, commission: 5m, time: DateTime.Today.AddDays(-1).AddHours(10))
         };
         var position = CreatePosition(100, 10.0m, trades);
+        var quote = CreateQuote(11.0m, 10.0m);
+
+        var (realized, unrealized, total) = PnLCalculator.CalculateTodayPnL(position, quote);
+
+        realized.Should().Be(0m);
+        unrealized.Should().Be(100m);
+        total.Should().Be(100m);
+    }
+
+    [Fact]
+    public void CalculateTodayPnL_CostPriceDiffersFromYestClose_UsesYestClose()
+    {
+        var position = CreatePosition(100, 8.0m);
         var quote = CreateQuote(11.0m, 10.0m);
 
         var (realized, unrealized, total) = PnLCalculator.CalculateTodayPnL(position, quote);

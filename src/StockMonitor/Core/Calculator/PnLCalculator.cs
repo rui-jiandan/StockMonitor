@@ -18,27 +18,22 @@ public static class PnLCalculator
     {
         decimal realizedPnL = 0m;
         decimal buyUnrealized = 0m;
-        decimal totalCommission = 0m;
-        decimal totalTax = 0m;
+        int soldTodayQty = 0;
 
         foreach (var trade in position.TodayTrades.Where(t => t.Time.Date == DateTime.Today))
         {
             if (trade.Type == TradeRecord.TradeType.Buy)
             {
                 buyUnrealized += (quote.CurrentPrice - trade.Price) * trade.Quantity - trade.Commission;
-                totalCommission += trade.Commission;
             }
             else
             {
-                realizedPnL += (trade.Price - quote.YestClose) * trade.Quantity;
-                totalCommission += trade.Commission;
-                totalTax += trade.Tax;
+                realizedPnL += (trade.Price - quote.YestClose) * trade.Quantity - trade.Commission - trade.Tax;
+                soldTodayQty += trade.Quantity;
             }
         }
 
-        realizedPnL -= (totalCommission + totalTax);
-
-        decimal holdUnrealized = (quote.CurrentPrice - position.AvgCostPrice) * position.Quantity;
+        decimal holdUnrealized = (quote.CurrentPrice - quote.YestClose) * Math.Max(0, position.Quantity - soldTodayQty);
         decimal totalUnrealized = buyUnrealized + holdUnrealized;
         decimal total = realizedPnL + totalUnrealized;
 
@@ -53,23 +48,7 @@ public static class PnLCalculator
     /// <returns>今日盈亏金额</returns>
     public static decimal GetTodayMoney(StockPosition position, StockQuote quote)
     {
-        if (position.TodayTrades == null || !position.TodayTrades.Any(t => t.Time.Date == DateTime.Today))
-            return 0m;
-
-        decimal money = 0m;
-
-        foreach (var trade in position.TodayTrades.Where(t => t.Time.Date == DateTime.Today))
-        {
-            if (trade.Type == TradeRecord.TradeType.Buy)
-            {
-                money += (quote.CurrentPrice - trade.Price) * trade.Quantity - trade.Commission;
-            }
-            else
-            {
-                money += (trade.Price - quote.YestClose) * trade.Quantity - trade.Commission - trade.Tax;
-            }
-        }
-
-        return money;
+        var (_, _, total) = CalculateTodayPnL(position, quote);
+        return total;
     }
 }
