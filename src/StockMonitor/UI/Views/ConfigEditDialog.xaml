@@ -73,6 +73,10 @@
                 <TextBlock Text="排序方式:" Margin="0,8,0,4" FontWeight="Bold"/>
                 <TextBox Text="{Binding OrderBy}" />
 
+                <TextBlock Text="最大可见股票数:" Margin="0,8,0,4" FontWeight="Bold"/>
+                <TextBox Text="{Binding MaxVisibleStocks}" />
+                <TextBlock Text="超出此数量的股票通过滚动条查看，默认5" FontSize="10" Foreground="Gray" Margin="0,2,0,0"/>
+
                 <Separator Margin="0,8"/>
 
                 <TextBlock Text="预览效果:" Margin="0,0,0,4" FontWeight="Bold"/>

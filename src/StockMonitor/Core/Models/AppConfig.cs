@@ -13,4 +13,5 @@ public class AppConfig
     public decimal TaxRate { get; set; } = 0;
     public string PrimaryDataSource { get; set; } = "Sina";
     public string FallbackDataSource { get; set; } = "Tencent";
+    public int MaxVisibleStocks { get; set; } = 5;
 }

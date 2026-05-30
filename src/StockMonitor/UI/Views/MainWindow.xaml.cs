@@ -12,6 +12,8 @@ namespace StockMonitor.UI.Views;
 public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
+    private bool _isFirstShow = true;
+    private bool _hasMeasuredItemHeight;
 
     public MainWindow(MainViewModel viewModel)
     {
@@ -20,11 +22,13 @@ public partial class MainWindow : Window
         DataContext = _viewModel;
 
         _viewModel.ToggleVisibilityRequested += OnToggleVisibility;
+        _viewModel.StocksUpdated += OnStocksUpdated;
+        Closed += (s, e) => _viewModel.StocksUpdated -= OnStocksUpdated;
         _viewModel.StartRefreshLoop();
     }
 
     /// <summary>
-    /// 窗口加载完成后定位到右下角（此时 SizeToContent 已计算出 ActualHeight）
+    /// 窗口加载完成后，定位到右下角
     /// </summary>
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
@@ -56,7 +60,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// 切换窗口显示/隐藏状态
+    /// 切换窗口显示/隐藏状态，仅首次显示时定位到右下角
     /// </summary>
     private void ToggleVisibility()
     {
@@ -66,14 +70,60 @@ public partial class MainWindow : Window
         }
         else
         {
+            if (_isFirstShow)
+            {
+                PositionWindowBottomRight();
+                _isFirstShow = false;
+            }
             Show();
-            PositionWindowBottomRight();
         }
     }
 
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         DragMove();
+    }
+
+    /// <summary>
+    /// 窗口大小变化时重新定位到右下角，确保窗口始终锚定在屏幕底部
+    /// </summary>
+    private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        PositionWindowBottomRight();
+    }
+
+    /// <summary>
+    /// 股票数据更新后，延迟测量首项高度并动态设置 MaxHeight
+    /// </summary>
+    private void OnStocksUpdated()
+    {
+        if (_hasMeasuredItemHeight) return;
+
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+        {
+            if (StockItemsControl.Items.Count == 0) return;
+
+            var container = StockItemsControl.ItemContainerGenerator.ContainerFromIndex(0);
+            if (container is not FrameworkElement element) return;
+
+            double itemHeight = element.ActualHeight + element.Margin.Top + element.Margin.Bottom;
+            if (itemHeight <= 0) return;
+
+            double summaryHeight = SummaryText.ActualHeight + SummaryText.Margin.Top + SummaryText.Margin.Bottom;
+
+            double borderPadding = 16;
+            double maxContentHeight = summaryHeight + itemHeight * _viewModel.MaxVisibleStocks;
+            double calculatedMaxHeight = maxContentHeight + borderPadding;
+
+            var source = PresentationSource.FromVisual(this);
+            var dpiScale = source?.CompositionTarget?.TransformFromDevice.M22 ?? 1.0;
+            double screenMaxHeight = SystemParameters.WorkArea.Height * 0.85 / dpiScale;
+
+            MaxHeight = Math.Min(calculatedMaxHeight, screenMaxHeight);
+            PositionWindowBottomRight();
+
+            _hasMeasuredItemHeight = true;
+        });
     }
 
     /// <summary>
@@ -91,8 +141,12 @@ public partial class MainWindow : Window
 
     private void Menu_Show(object sender, RoutedEventArgs e)
     {
+        if (_isFirstShow)
+        {
+            PositionWindowBottomRight();
+            _isFirstShow = false;
+        }
         Show();
-        PositionWindowBottomRight();
     }
 
     private void Menu_PositionEdit(object sender, RoutedEventArgs e)

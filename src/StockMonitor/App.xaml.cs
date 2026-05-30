@@ -15,6 +15,8 @@ namespace StockMonitor;
 /// </summary>
 public partial class App : Application
 {
+    private Mutex? _singleInstanceMutex;
+
     /// <summary>
     /// 全局服务提供者，供 View 层获取 ViewModel 等服务
     /// </summary>
@@ -23,6 +25,15 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        _singleInstanceMutex = new Mutex(true, "StockMonitor_SingleInstance", out bool createdNew);
+        if (!createdNew)
+        {
+            MessageBox.Show("StockMonitor 已在运行中，不能重复启动。", "提示",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            Shutdown();
+            return;
+        }
 
         FileLogger.LogInfo("StockMonitor 启动中...");
 
@@ -44,8 +55,8 @@ public partial class App : Application
         FileLogger.LogInfo($"持仓合并完成，持仓数: {positionService.GetAllPositions().Count}");
 
         var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
-        mainWindow.Show();
-        FileLogger.LogInfo("主窗口已显示");
+        MainWindow = mainWindow;
+        FileLogger.LogInfo("主窗口已创建（默认隐藏，通过托盘图标显示）");
     }
 
     /// <summary>
@@ -88,6 +99,8 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _singleInstanceMutex?.ReleaseMutex();
+        _singleInstanceMutex?.Dispose();
         ServiceProvider?.Dispose();
         base.OnExit(e);
     }

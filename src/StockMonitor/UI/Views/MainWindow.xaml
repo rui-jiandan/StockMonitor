@@ -13,6 +13,7 @@
         ResizeMode="NoResize"
         Width="260" SizeToContent="Height"
         Loaded="Window_Loaded"
+        SizeChanged="Window_SizeChanged"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
     <Window.Resources>
         <conv:PnLToBrushConverter x:Key="PnLToBrushConverter"/>
@@ -27,15 +28,18 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0"
+                <TextBlock Grid.Row="0" x:Name="SummaryText"
                            Text="{Binding TodaySummary}"
                            Foreground="{Binding SummaryColor, Converter={StaticResource PnLToBrushConverter}}"
                            FontSize="11"
                            Margin="0,0,0,4"
                            TextWrapping="Wrap"/>
 
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding Stocks}">
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Auto"
+                              Padding="0,0,4,0">
+                    <ItemsControl x:Name="StockItemsControl" ItemsSource="{Binding Stocks}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:StockDisplayItem}">
                                 <StackPanel Margin="0,1">

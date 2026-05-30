@@ -40,6 +40,16 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public event Action? ToggleVisibilityRequested;
 
     /// <summary>
+    /// 股票列表数据更新完成事件，通知 View 进行 UI 测量
+    /// </summary>
+    public event Action? StocksUpdated;
+
+    /// <summary>
+    /// 最大可见股票数量，从配置读取
+    /// </summary>
+    public int MaxVisibleStocks => _config.MaxVisibleStocks;
+
+    /// <summary>
     /// 切换窗口显示/隐藏命令（绑定到托盘图标双击）
     /// </summary>
     [RelayCommand]
@@ -99,7 +109,15 @@ public partial class MainViewModel : ObservableObject, IDisposable
         {
             if (DateTime.Now.TimeOfDay > MarketCloseTime)
             {
-                FileLogger.LogInfo("已过收盘时间(15:20)，停止自动刷新");
+                try
+                {
+                    await RefreshData();
+                    FileLogger.LogInfo("已过收盘时间(15:20)，刷新一次后停止自动刷新");
+                }
+                catch (Exception ex)
+                {
+                    FileLogger.LogError("收盘后刷新行情失败", ex);
+                }
                 break;
             }
 
@@ -154,6 +172,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
                 Stocks.Add(item);
         });
 
+        StocksUpdated?.Invoke();
         _alertService.CheckAlerts(quotes);
         UpdateTodaySummary(positions, quotes);
     }

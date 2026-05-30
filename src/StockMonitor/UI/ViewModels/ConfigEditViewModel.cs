@@ -35,6 +35,7 @@ public partial class ConfigEditViewModel : ObservableObject
     [ObservableProperty] private int _refreshTime;
     [ObservableProperty] private string _showTodaySumFormat;
     [ObservableProperty] private string _orderBy;
+    [ObservableProperty] private int _maxVisibleStocks;
     [ObservableProperty] private string _previewText = string.Empty;
 
     /// <summary>
@@ -80,6 +81,7 @@ public partial class ConfigEditViewModel : ObservableObject
         _refreshTime = _config.RefreshTime;
         _showTodaySumFormat = _config.ShowTodaySumFormat;
         _orderBy = _config.OrderBy;
+        _maxVisibleStocks = _config.MaxVisibleStocks;
 
         UpdatePreview();
     }
@@ -145,6 +147,7 @@ public partial class ConfigEditViewModel : ObservableObject
         _config.RefreshTime = RefreshTime;
         _config.ShowTodaySumFormat = ShowTodaySumFormat;
         _config.OrderBy = OrderBy;
+        _config.MaxVisibleStocks = MaxVisibleStocks;
         _configRepo.Save(_config);
     }
 }
