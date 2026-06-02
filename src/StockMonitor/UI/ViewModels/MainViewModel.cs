@@ -193,9 +193,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         if (quote != null)
         {
-            item.PriceText = quote.CurrentPrice.ToString("F2");
-            item.ChangeText = quote.Change >= 0 ? $"+{quote.Change:F2}" : $"{quote.Change:F2}";
-            item.ChangeRateText = quote.ChangeRate >= 0 ? $"+{quote.ChangeRate:F2}%" : $"{quote.ChangeRate:F2}%";
+            item.PriceText = quote.CurrentPrice.ToString("G");
+            item.ChangeText = quote.Change >= 0 ? $"+{quote.Change:G}" : $"{quote.Change:G}";
+            item.ChangeRateText = quote.ChangeRate >= 0 ? $"+{quote.ChangeRate:G}%" : $"{quote.ChangeRate:G}%";
             item.PriceColor = quote.Change > 0 ? "Red" : quote.Change < 0 ? "#00FF00" : "White";
 
             if (position != null && position.GetTotalQuantity() > 0)
