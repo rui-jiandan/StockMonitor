@@ -184,35 +184,62 @@ public partial class MainViewModel : ObservableObject, IDisposable
     /// <param name="position">持仓信息，可能为 null（无持仓）</param>
     private StockDisplayItem CreateDisplayItem(StockQuote? quote, StockPosition? position)
     {
-        var item = new StockDisplayItem
-        {
-            Code = position?.Code ?? quote?.Code ?? string.Empty,
-            DisplayName = !string.IsNullOrEmpty(quote?.Name) ? quote.Name : position?.Code ?? string.Empty,
-            HasPosition = position != null && position.GetTotalQuantity() > 0
-        };
+        var code = position?.Code ?? quote?.Code ?? string.Empty;
+        var name = quote?.Name ?? string.Empty;
+        var quantity = position?.GetTotalQuantity() ?? 0;
+        var avgCost = position?.AvgCostPrice ?? 0m;
+        var hasPosition = quantity > 0;
+
+        string price = "--";
+        string change = "--";
+        string rate = "--";
+        string pnl = string.Empty;
+        string color = "White";
 
         if (quote != null)
         {
-            item.PriceText = quote.CurrentPrice.ToString("G");
-            item.ChangeText = quote.Change >= 0 ? $"+{quote.Change:G}" : $"{quote.Change:G}";
-            item.ChangeRateText = quote.ChangeRate >= 0 ? $"+{quote.ChangeRate:G}%" : $"{quote.ChangeRate:G}%";
-            item.PriceColor = quote.Change > 0 ? "Red" : quote.Change < 0 ? "#00FF00" : "White";
+            price = quote.CurrentPrice.ToString("G");
+            change = quote.Change >= 0 ? $"+{quote.Change:G}" : $"{quote.Change:G}";
+            rate = quote.ChangeRate >= 0 ? $"+{quote.ChangeRate:G}%" : $"{quote.ChangeRate:G}%";
+            color = quote.Change > 0 ? "Red" : quote.Change < 0 ? "#00FF00" : "White";
 
-            if (position != null && position.GetTotalQuantity() > 0)
+            if (hasPosition)
             {
-                var (_, _, totalPnL) = PnLCalculator.CalculateTodayPnL(position, quote);
-                item.PnlText = totalPnL >= 0 ? $"+{totalPnL:F0}" : $"{totalPnL:F0}";
+                var (_, _, totalPnL) = PnLCalculator.CalculateTodayPnL(position!, quote);
+                pnl = totalPnL >= 0 ? $"+{totalPnL:F0}" : $"{totalPnL:F0}";
             }
         }
-        else
-        {
-            item.PriceText = "--";
-            item.ChangeText = "--";
-            item.ChangeRateText = "--";
-            item.PriceColor = "White";
-        }
 
-        return item;
+        var displayName = FormatDisplayName(code, name, price, change, rate, pnl, quantity.ToString(), avgCost.ToString("G"));
+
+        return new StockDisplayItem
+        {
+            Code = code,
+            DisplayName = displayName,
+            PriceText = price,
+            ChangeText = change,
+            ChangeRateText = rate,
+            PnlText = pnl,
+            PriceColor = color,
+            HasPosition = hasPosition
+        };
+    }
+
+    /// <summary>
+    /// 根据配置的 ShowFormat 格式化显示名称
+    /// </summary>
+    private string FormatDisplayName(string code, string name, string price, string change, string rate, string pnl, string quantity, string cost)
+    {
+        var format = _config.ShowFormat;
+        return format
+            .Replace("#name", name)
+            .Replace("#code", code)
+            .Replace("#price", price)
+            .Replace("#change", change)
+            .Replace("#rate", rate)
+            .Replace("#makemoney", pnl)
+            .Replace("#quantity", quantity)
+            .Replace("#cost", cost);
     }
 
     /// <summary>

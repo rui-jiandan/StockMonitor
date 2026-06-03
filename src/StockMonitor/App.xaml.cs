@@ -81,7 +81,10 @@ public partial class App : Application
             var repo = sp.GetRequiredService<IRepository<List<StockPosition>>>();
             var configRepo = sp.GetRequiredService<IRepository<AppConfig>>();
             var config = configRepo.Load();
-            return new PositionService(repo, config.CommissionRate, config.TaxRate);
+            return new PositionService(repo,
+                config.CommissionRate, config.CommissionMinAmount,
+                config.EtfCommissionRate, config.EtfCommissionMinAmount,
+                config.TaxRate);
         });
 
         services.AddSingleton<IAlertService, AlertService>();

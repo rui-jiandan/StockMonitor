@@ -42,27 +42,10 @@
                     <ItemsControl x:Name="StockItemsControl" ItemsSource="{Binding Stocks}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:StockDisplayItem}">
-                                <StackPanel Margin="0,1">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding DisplayName}"
-                                                   Foreground="#BBBBBB" FontSize="11"/>
-                                        <TextBlock Text="{Binding PnlText}"
-                                                   Foreground="{Binding PriceColor, Converter={StaticResource PnLToBrushConverter}}"
-                                                   FontSize="11" Margin="8,0,0,0"
-                                                   Visibility="{Binding HasPosition, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                    </StackPanel>
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding PriceText}"
-                                                   Foreground="{Binding PriceColor, Converter={StaticResource PnLToBrushConverter}}"
-                                                   FontSize="10"/>
-                                        <TextBlock Text="{Binding ChangeText}"
-                                                   Foreground="{Binding PriceColor, Converter={StaticResource PnLToBrushConverter}}"
-                                                   FontSize="10" Margin="6,0,0,0"/>
-                                        <TextBlock Text="{Binding ChangeRateText}"
-                                                   Foreground="{Binding PriceColor, Converter={StaticResource PnLToBrushConverter}}"
-                                                   FontSize="10" Margin="6,0,0,0"/>
-                                    </StackPanel>
-                                </StackPanel>
+                                <TextBlock Text="{Binding DisplayName}"
+                                           Foreground="{Binding PriceColor, Converter={StaticResource PnLToBrushConverter}}"
+                                           FontSize="11" Margin="0,1"
+                                           TextWrapping="Wrap"/>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>

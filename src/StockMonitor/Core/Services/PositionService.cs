@@ -10,16 +10,25 @@ public class PositionService : IPositionService
 {
     private readonly IRepository<List<StockPosition>> _repository;
     private readonly decimal _commissionRate;
+    private readonly decimal _commissionMinAmount;
+    private readonly decimal _etfCommissionRate;
+    private readonly decimal _etfCommissionMinAmount;
     private readonly decimal _taxRate;
     private List<StockPosition> _positions;
 
     public PositionService(
         IRepository<List<StockPosition>> repository,
-        decimal commissionRate = 0.00023m,
+        decimal commissionRate = 0.000086m,
+        decimal commissionMinAmount = 5m,
+        decimal etfCommissionRate = 0.00005m,
+        decimal etfCommissionMinAmount = 0.1m,
         decimal taxRate = 0m)
     {
         _repository = repository;
         _commissionRate = commissionRate;
+        _commissionMinAmount = commissionMinAmount;
+        _etfCommissionRate = etfCommissionRate;
+        _etfCommissionMinAmount = etfCommissionMinAmount;
         _taxRate = taxRate;
         _positions = repository.Load() ?? new List<StockPosition>();
     }
@@ -33,7 +42,7 @@ public class PositionService : IPositionService
     {
         var position = GetOrCreatePosition(code);
         decimal turnover = price * quantity;
-        decimal commission = Math.Max(turnover * _commissionRate, 5m);
+        decimal commission = CalculateCommission(code, turnover);
 
         position.TodayTrades.Add(new TradeRecord
         {
@@ -59,8 +68,8 @@ public class PositionService : IPositionService
                 $"减仓数量 {quantity} 超过总持仓 {totalQuantity}");
 
         decimal turnover = price * quantity;
-        decimal commission = Math.Max(turnover * _commissionRate, 5m);
-        decimal tax = Math.Round(turnover * _taxRate, 2);
+        decimal commission = CalculateCommission(code, turnover);
+        decimal tax = IsFund(code) ? 0m : Math.Round(turnover * _taxRate, 2);
 
         position.TodayTrades.Add(new TradeRecord
         {
@@ -168,5 +177,21 @@ public class PositionService : IPositionService
     {
         _repository.Save(_positions);
         PositionChanged?.Invoke(this, new PositionChangedEventArgs { Code = code });
+    }
+
+    private static bool IsFund(string code)
+    {
+        if (string.IsNullOrEmpty(code) || code.Length < 3) return false;
+        var numPart = code[2..];
+        return !numPart.StartsWith('6') && !numPart.StartsWith('0') && !numPart.StartsWith('3');
+    }
+
+    private decimal CalculateCommission(string code, decimal turnover)
+    {
+        if (IsFund(code))
+        {
+            return Math.Max(turnover * _etfCommissionRate, _etfCommissionMinAmount);
+        }
+        return Math.Max(turnover * _commissionRate, _commissionMinAmount);
     }
 }

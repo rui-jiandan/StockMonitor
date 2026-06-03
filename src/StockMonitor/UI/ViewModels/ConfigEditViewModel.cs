@@ -38,6 +38,12 @@ public partial class ConfigEditViewModel : ObservableObject
     [ObservableProperty] private int _maxVisibleStocks;
     [ObservableProperty] private string _previewText = string.Empty;
 
+    [ObservableProperty] private decimal _commissionRate;
+    [ObservableProperty] private decimal _commissionMinAmount;
+    [ObservableProperty] private decimal _etfCommissionRate;
+    [ObservableProperty] private decimal _etfCommissionMinAmount;
+    [ObservableProperty] private decimal _taxRate;
+
     /// <summary>
     /// 当前活跃的格式字段名称，用于占位符插入目标
     /// </summary>
@@ -82,6 +88,12 @@ public partial class ConfigEditViewModel : ObservableObject
         _showTodaySumFormat = _config.ShowTodaySumFormat;
         _orderBy = _config.OrderBy;
         _maxVisibleStocks = _config.MaxVisibleStocks;
+
+        _commissionRate = _config.CommissionRate;
+        _commissionMinAmount = _config.CommissionMinAmount;
+        _etfCommissionRate = _config.EtfCommissionRate;
+        _etfCommissionMinAmount = _config.EtfCommissionMinAmount;
+        _taxRate = _config.TaxRate;
 
         UpdatePreview();
     }
@@ -148,6 +160,13 @@ public partial class ConfigEditViewModel : ObservableObject
         _config.ShowTodaySumFormat = ShowTodaySumFormat;
         _config.OrderBy = OrderBy;
         _config.MaxVisibleStocks = MaxVisibleStocks;
+
+        _config.CommissionRate = CommissionRate;
+        _config.CommissionMinAmount = CommissionMinAmount;
+        _config.EtfCommissionRate = EtfCommissionRate;
+        _config.EtfCommissionMinAmount = EtfCommissionMinAmount;
+        _config.TaxRate = TaxRate;
+
         _configRepo.Save(_config);
     }
 }

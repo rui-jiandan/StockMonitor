@@ -3,8 +3,12 @@
   "refreshTime": 2000,
   "showTodaySumFormat": "今日盈亏:#money,今日比例 #rate%",
   "orderBy": "havepos desc,makemoney desc",
-  "commissionRate": 0.00023,
+  "commissionRate": 0.000086,
+  "commissionMinAmount": 5,
+  "etfCommissionRate": 0.00005,
+  "etfCommissionMinAmount": 0.1,
   "taxRate": 0,
   "primaryDataSource": "Sina",
-  "fallbackDataSource": "Tencent"
+  "fallbackDataSource": "Tencent",
+  "maxVisibleStocks": 5
 }

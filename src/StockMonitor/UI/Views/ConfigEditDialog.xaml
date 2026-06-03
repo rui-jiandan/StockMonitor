@@ -79,6 +79,25 @@
 
                 <Separator Margin="0,8"/>
 
+                <TextBlock Text="佣金配置:" Margin="0,0,0,4" FontWeight="Bold"/>
+                
+                <TextBlock Text="股票佣金费率(万分之):" Margin="0,4,0,2" FontSize="11"/>
+                <TextBox Text="{Binding CommissionRate}" />
+                
+                <TextBlock Text="股票最低佣金(元):" Margin="0,4,0,2" FontSize="11"/>
+                <TextBox Text="{Binding CommissionMinAmount}" />
+                
+                <TextBlock Text="基金佣金费率(万分之):" Margin="0,4,0,2" FontSize="11"/>
+                <TextBox Text="{Binding EtfCommissionRate}" />
+                
+                <TextBlock Text="基金最低佣金(元):" Margin="0,4,0,2" FontSize="11"/>
+                <TextBox Text="{Binding EtfCommissionMinAmount}" />
+                
+                <TextBlock Text="印花税率(万分之):" Margin="0,4,0,2" FontSize="11"/>
+                <TextBox Text="{Binding TaxRate}" />
+
+                <Separator Margin="0,8"/>
+
                 <TextBlock Text="预览效果:" Margin="0,0,0,4" FontWeight="Bold"/>
                 <Border Background="#1A1A1A" CornerRadius="4" Padding="8,6">
                     <TextBlock Text="{Binding PreviewText}"
