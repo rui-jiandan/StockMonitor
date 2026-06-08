@@ -114,7 +114,7 @@ public class PositionService : IPositionService
     }
 
     /// <summary>
-    /// 合并当日交易到持仓：将 TodayTrades 中的买卖记录汇总更新 Quantity 和 AvgCostPrice，然后清除当日交易。
+    /// 合并所有未合并的交易到持仓：将 TodayTrades 中的买卖记录汇总更新 Quantity 和 AvgCostPrice，然后清空交易列表。
     /// T+0 修复核心——白天交易不直接改持仓数量/成本，日终统一合并。
     /// </summary>
     public void MergeDayTrades()
@@ -124,22 +124,17 @@ public class PositionService : IPositionService
             if (position.TodayTrades.Count == 0)
                 continue;
 
-            var todayTrades = position.TodayTrades
-                .Where(t => t.Time.Date == DateTime.Today)
-                .ToList();
+            var pendingTrades = position.TodayTrades.ToList();
 
-            if (todayTrades.Count == 0)
-                continue;
-
-            int buyQty = todayTrades
+            int buyQty = pendingTrades
                 .Where(t => t.Type == TradeRecord.TradeType.Buy)
                 .Sum(t => t.Quantity);
-            int sellQty = todayTrades
+            int sellQty = pendingTrades
                 .Where(t => t.Type == TradeRecord.TradeType.Sell)
                 .Sum(t => t.Quantity);
             int netQty = buyQty - sellQty;
 
-            decimal buyTotalCost = todayTrades
+            decimal buyTotalCost = pendingTrades
                 .Where(t => t.Type == TradeRecord.TradeType.Buy)
                 .Sum(t => t.Quantity * t.Price + t.Commission + t.Tax);
             decimal sellCostDeduction = sellQty * position.AvgCostPrice;
@@ -152,9 +147,7 @@ public class PositionService : IPositionService
             position.Quantity = newQty;
             position.AvgCostPrice = newAvgCost;
 
-            position.TodayTrades = position.TodayTrades
-                .Where(t => t.Time.Date != DateTime.Today)
-                .ToList();
+            position.TodayTrades.Clear();
         }
 
         _repository.Save(_positions);

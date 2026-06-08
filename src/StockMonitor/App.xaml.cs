@@ -37,14 +37,15 @@ public partial class App : Application
 
         FileLogger.LogInfo("StockMonitor 启动中...");
 
-        var services = new ServiceCollection();
-        ConfigureServices(services);
-        ServiceProvider = services.BuildServiceProvider();
-
+        // 先迁移数据，再构建 DI 容器，确保 PositionService 加载的是迁移后的数据
         var stocksPath = System.IO.Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory, "stocks.json");
         DataMigrator.MigrateStocksIfNeeded(stocksPath);
         FileLogger.LogInfo($"数据迁移完成: {stocksPath}");
+
+        var services = new ServiceCollection();
+        ConfigureServices(services);
+        ServiceProvider = services.BuildServiceProvider();
 
         var configRepo = ServiceProvider.GetRequiredService<IRepository<AppConfig>>();
         var config = configRepo.Load();
@@ -102,6 +103,13 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        try
+        {
+            var positionService = ServiceProvider?.GetRequiredService<IPositionService>();
+            positionService?.MergeDayTrades();
+        }
+        catch { /* 确保退出流程不被阻断 */ }
+
         _singleInstanceMutex?.ReleaseMutex();
         _singleInstanceMutex?.Dispose();
         ServiceProvider?.Dispose();

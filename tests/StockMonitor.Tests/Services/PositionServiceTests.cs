@@ -200,4 +200,130 @@ public class PositionServiceTests
 
         changedCode.Should().Be("sh600036");
     }
+
+    /// <summary>
+    /// 验证核心 Bug 修复：昨日加仓的交易记录在次日 MergeDayTrades 时应被正确合并
+    /// </summary>
+    [Fact]
+    public void MergeDayTrades_YesterdayBuyTrades_MergesCorrectly()
+    {
+        // 模拟昨日加仓：手动添加一条日期为昨天的买入记录
+        var position = _service.GetPosition("sh600036")!;
+        position.TodayTrades.Add(new TradeRecord
+        {
+            Type = TradeRecord.TradeType.Buy,
+            Quantity = 100,
+            Price = 44.0m,
+            Time = DateTime.Today.AddDays(-1),
+            Commission = 5m,
+            Tax = 0m
+        });
+
+        _service.MergeDayTrades();
+
+        position.Quantity.Should().Be(400);
+        position.AvgCostPrice.Should().BeApproximately(
+            (300 * 43.267m + 100 * 44.0m + 5m) / 400m, 0.0001m);
+        position.TodayTrades.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// 验证核心 Bug 修复：昨日减仓的交易记录在次日 MergeDayTrades 时应被正确合并
+    /// </summary>
+    [Fact]
+    public void MergeDayTrades_YesterdaySellTrades_MergesCorrectly()
+    {
+        var position = _service.GetPosition("sh600036")!;
+        position.TodayTrades.Add(new TradeRecord
+        {
+            Type = TradeRecord.TradeType.Sell,
+            Quantity = 100,
+            Price = 45.0m,
+            Time = DateTime.Today.AddDays(-1),
+            Commission = 5m,
+            Tax = 0m
+        });
+
+        _service.MergeDayTrades();
+
+        position.Quantity.Should().Be(200);
+        position.AvgCostPrice.Should().Be(43.267m);
+        position.TodayTrades.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// 验证跨多日的未合并交易能一次性全部合并
+    /// </summary>
+    [Fact]
+    public void MergeDayTrades_MultiDayTrades_MergesAll()
+    {
+        var position = _service.GetPosition("sh600036")!;
+        // 前天买入 100 股
+        position.TodayTrades.Add(new TradeRecord
+        {
+            Type = TradeRecord.TradeType.Buy,
+            Quantity = 100,
+            Price = 42.0m,
+            Time = DateTime.Today.AddDays(-2),
+            Commission = 5m,
+            Tax = 0m
+        });
+        // 昨天卖出 50 股
+        position.TodayTrades.Add(new TradeRecord
+        {
+            Type = TradeRecord.TradeType.Sell,
+            Quantity = 50,
+            Price = 44.0m,
+            Time = DateTime.Today.AddDays(-1),
+            Commission = 5m,
+            Tax = 0m
+        });
+
+        _service.MergeDayTrades();
+
+        // 净增 50 股，总持仓 350
+        position.Quantity.Should().Be(350);
+        position.TodayTrades.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// 验证 GetTodayNetQuantity 对昨日交易也能正确计算净数量
+    /// </summary>
+    [Fact]
+    public void GetTodayNetQuantity_YesterdayTrades_IncludedInCalculation()
+    {
+        var position = _service.GetPosition("sh600036")!;
+        position.TodayTrades.Add(new TradeRecord
+        {
+            Type = TradeRecord.TradeType.Buy,
+            Quantity = 100,
+            Price = 44.0m,
+            Time = DateTime.Today.AddDays(-1),
+            Commission = 5m,
+            Tax = 0m
+        });
+
+        position.GetTodayNetQuantity().Should().Be(100);
+        position.GetTotalQuantity().Should().Be(400);
+    }
+
+    /// <summary>
+    /// 验证 GetTotalQuantity 对昨日减仓交易也能正确计算
+    /// </summary>
+    [Fact]
+    public void GetTotalQuantity_YesterdaySellTrades_ReflectsCorrectly()
+    {
+        var position = _service.GetPosition("sh600036")!;
+        position.TodayTrades.Add(new TradeRecord
+        {
+            Type = TradeRecord.TradeType.Sell,
+            Quantity = 100,
+            Price = 45.0m,
+            Time = DateTime.Today.AddDays(-1),
+            Commission = 5m,
+            Tax = 0m
+        });
+
+        position.GetTotalQuantity().Should().Be(200);
+    }
 }

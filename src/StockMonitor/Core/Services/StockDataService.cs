@@ -43,11 +43,11 @@ public class StockDataService : IStockDataService
             return new List<StockQuote>();
         }
 
-        FileLogger.LogInfo($"开始获取行情，股票数: {codes.Count}，数据源数: {_providers.Count}");
+        //FileLogger.LogInfo($"开始获取行情，股票数: {codes.Count}，数据源数: {_providers.Count}");
 
         foreach (var provider in _providers)
         {
-            FileLogger.LogInfo($"尝试数据源: {provider.Name}，可用: {provider.IsAvailable}");
+            //FileLogger.LogInfo($"尝试数据源: {provider.Name}，可用: {provider.IsAvailable}");
 
             if (!provider.IsAvailable) continue;
             try
@@ -55,7 +55,7 @@ public class StockDataService : IStockDataService
                 var quotes = await provider.GetQuotesAsync(codes, _cancellationToken);
                 if (quotes.Count > 0)
                 {
-                    FileLogger.LogInfo($"数据源 {provider.Name} 返回 {quotes.Count} 条行情");
+                    //FileLogger.LogInfo($"数据源 {provider.Name} 返回 {quotes.Count} 条行情");
                     _cachedQuotes = quotes;
                     QuotesUpdated?.Invoke(this, quotes);
                     return quotes;

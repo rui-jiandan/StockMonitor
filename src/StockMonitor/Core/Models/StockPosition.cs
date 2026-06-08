@@ -14,7 +14,6 @@ public class StockPosition
     public int GetTodayNetQuantity()
     {
         return TodayTrades
-            .Where(t => t.Time.Date == DateTime.Today)
             .Sum(t => t.Type == TradeRecord.TradeType.Buy ? t.Quantity : -t.Quantity);
     }
 
