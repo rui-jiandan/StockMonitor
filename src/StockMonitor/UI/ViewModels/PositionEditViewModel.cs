@@ -17,6 +17,7 @@ public partial class PositionEditViewModel : ObservableObject
     public ObservableCollection<StockPosition> StockList { get; }
 
     [ObservableProperty] private StockPosition? _selectedStock;
+    [ObservableProperty] private string _inputName = string.Empty;
     [ObservableProperty] private string _inputQuantity = string.Empty;
     [ObservableProperty] private string _inputPrice = string.Empty;
     [ObservableProperty] private string _newCode = string.Empty;
@@ -34,6 +35,7 @@ public partial class PositionEditViewModel : ObservableObject
     {
         if (value != null)
         {
+            InputName = value.Name;
             InputQuantity = value.GetTotalQuantity().ToString();
             InputPrice = value.AvgCostPrice.ToString("F2");
         }
@@ -72,14 +74,15 @@ public partial class PositionEditViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 编辑持仓：直接修改数量和成本价
+    /// 编辑持仓：直接修改名称、数量和成本价
     /// </summary>
     [RelayCommand]
     private void EditPosition()
     {
         if (SelectedStock == null) return;
         if (!int.TryParse(InputQuantity, out var qty) || !decimal.TryParse(InputPrice, out var price)) return;
-        _positionService.UpdatePosition(SelectedStock.Code, qty, price);
+        var name = string.IsNullOrWhiteSpace(InputName) ? null : InputName.Trim();
+        _positionService.UpdatePosition(SelectedStock.Code, qty, price, name);
         RefreshList();
     }
 

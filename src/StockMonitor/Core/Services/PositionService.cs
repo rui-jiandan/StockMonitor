@@ -84,13 +84,15 @@ public class PositionService : IPositionService
         SaveAndNotify(code);
     }
 
-    public void UpdatePosition(string code, int quantity, decimal avgCostPrice)
+    public void UpdatePosition(string code, int quantity, decimal avgCostPrice, string? name = null)
     {
         var position = GetPosition(code)
             ?? throw new InvalidOperationException($"股票 {code} 不存在");
 
         position.Quantity = quantity;
         position.AvgCostPrice = avgCostPrice;
+        if (name != null)
+            position.Name = name;
 
         SaveAndNotify(code);
     }
@@ -114,27 +116,34 @@ public class PositionService : IPositionService
     }
 
     /// <summary>
-    /// 合并所有未合并的交易到持仓：将 TodayTrades 中的买卖记录汇总更新 Quantity 和 AvgCostPrice，然后清空交易列表。
-    /// T+0 修复核心——白天交易不直接改持仓数量/成本，日终统一合并。
+    /// 合并交易到持仓。默认只合并非今天的交易（启动时调用），<paramref name="mergeAll"/> 为 true 时合并全部（退出时调用）。
     /// </summary>
-    public void MergeDayTrades()
+    /// <param name="mergeAll">是否合并所有交易，包括今天的。退出时传 true 做日终结算</param>
+    public void MergeDayTrades(bool mergeAll = false)
     {
+        var today = DateTime.Today;
+
         foreach (var position in _positions)
         {
             if (position.TodayTrades.Count == 0)
                 continue;
 
-            var pendingTrades = position.TodayTrades.ToList();
+            var tradesToMerge = mergeAll
+                ? position.TodayTrades.ToList()
+                : position.TodayTrades.Where(t => t.Time.Date < today).ToList();
 
-            int buyQty = pendingTrades
+            if (tradesToMerge.Count == 0)
+                continue;
+
+            int buyQty = tradesToMerge
                 .Where(t => t.Type == TradeRecord.TradeType.Buy)
                 .Sum(t => t.Quantity);
-            int sellQty = pendingTrades
+            int sellQty = tradesToMerge
                 .Where(t => t.Type == TradeRecord.TradeType.Sell)
                 .Sum(t => t.Quantity);
             int netQty = buyQty - sellQty;
 
-            decimal buyTotalCost = pendingTrades
+            decimal buyTotalCost = tradesToMerge
                 .Where(t => t.Type == TradeRecord.TradeType.Buy)
                 .Sum(t => t.Quantity * t.Price + t.Commission + t.Tax);
             decimal sellCostDeduction = sellQty * position.AvgCostPrice;
@@ -147,7 +156,8 @@ public class PositionService : IPositionService
             position.Quantity = newQty;
             position.AvgCostPrice = newAvgCost;
 
-            position.TodayTrades.Clear();
+            foreach (var trade in tradesToMerge)
+                position.TodayTrades.Remove(trade);
         }
 
         _repository.Save(_positions);

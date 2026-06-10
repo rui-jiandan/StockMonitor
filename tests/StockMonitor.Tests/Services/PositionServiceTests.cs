@@ -134,7 +134,7 @@ public class PositionServiceTests
     {
         _service.AddPosition("sh600036", 44.0m, 100);
 
-        _service.MergeDayTrades();
+        _service.MergeDayTrades(mergeAll: true);
 
         var position = _service.GetPosition("sh600036");
         position.Should().NotBeNull();
@@ -149,7 +149,7 @@ public class PositionServiceTests
     {
         _service.ReducePosition("sh600036", 45.0m, 100);
 
-        _service.MergeDayTrades();
+        _service.MergeDayTrades(mergeAll: true);
 
         var position = _service.GetPosition("sh600036");
         position.Should().NotBeNull();

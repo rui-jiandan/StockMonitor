@@ -37,16 +37,20 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="数量:" VerticalAlignment="Center" Margin="0,2"/>
-                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding InputQuantity}" Margin="4,2"/>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="名称:" VerticalAlignment="Center" Margin="0,2"/>
+                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding InputName}" Margin="4,2"/>
 
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="价格:" VerticalAlignment="Center" Margin="0,2"/>
-                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding InputPrice}" Margin="4,2"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="数量:" VerticalAlignment="Center" Margin="0,2"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding InputQuantity}" Margin="4,2"/>
 
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="新代码:" VerticalAlignment="Center" Margin="0,2"/>
-                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding NewCode}" Margin="4,2"/>
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="价格:" VerticalAlignment="Center" Margin="0,2"/>
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding InputPrice}" Margin="4,2"/>
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="新代码:" VerticalAlignment="Center" Margin="0,2"/>
+                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding NewCode}" Margin="4,2"/>
             </Grid>
         </StackPanel>
 
