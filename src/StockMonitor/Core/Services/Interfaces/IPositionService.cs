@@ -28,7 +28,7 @@ public interface IPositionService
     void AddPosition(string code, decimal price, int quantity);
     void ReducePosition(string code, decimal price, int quantity);
     void UpdatePosition(string code, int quantity, decimal avgCostPrice, string? name = null);
-    void AddStock(string code);
+    void AddStock(string code, string? name = null);
     void RemoveStock(string code);
     void MergeDayTrades(bool mergeAll = false);
     event EventHandler<PositionChangedEventArgs>? PositionChanged;

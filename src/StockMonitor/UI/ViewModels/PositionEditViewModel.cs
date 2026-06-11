@@ -98,14 +98,15 @@ public partial class PositionEditViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 添加新股票：输入股票代码创建空持仓
+    /// 添加新股票：输入股票代码和名称创建空持仓
     /// </summary>
     [RelayCommand]
     private void AddNewStock()
     {
         if (string.IsNullOrEmpty(NewCode)) return;
         var normalizedCode = DataMigrator.NormalizeCode(NewCode.Trim());
-        _positionService.AddStock(normalizedCode);
+        var name = string.IsNullOrWhiteSpace(InputName) ? null : InputName.Trim();
+        _positionService.AddStock(normalizedCode, name);
         RefreshList();
         NewCode = string.Empty;
     }

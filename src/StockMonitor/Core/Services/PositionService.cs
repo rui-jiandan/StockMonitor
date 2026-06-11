@@ -97,12 +97,12 @@ public class PositionService : IPositionService
         SaveAndNotify(code);
     }
 
-    public void AddStock(string code)
+    public void AddStock(string code, string? name = null)
     {
         if (GetPosition(code) != null)
             throw new InvalidOperationException($"股票 {code} 已存在");
 
-        _positions.Add(new StockPosition { Code = code });
+        _positions.Add(new StockPosition { Code = code, Name = name ?? string.Empty });
         SaveAndNotify(code);
     }
 
