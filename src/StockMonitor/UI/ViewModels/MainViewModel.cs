@@ -7,6 +7,7 @@ using StockMonitor.Core.Models;
 using StockMonitor.Core.Services;
 using StockMonitor.Core.Services.Interfaces;
 using StockMonitor.Logging;
+using StockMonitor.UI.Views;
 
 namespace StockMonitor.UI.ViewModels;
 
@@ -297,15 +298,15 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// 预警触发回调，弹出 MessageBox 通知用户
+    /// 预警触发回调，在屏幕右下角弹出美化通知窗口
     /// </summary>
     private void OnAlertTriggered(object? sender, AlertTriggeredEventArgs e)
     {
-        var message = $"预警触发：{e.Quote.Name}({e.Rule.StockCode}) " +
-                      $"{e.Rule.Type} 阈值 {e.Rule.Threshold}，当前价 {e.Quote.CurrentPrice}";
+        var stockInfo = $"{e.Quote.Name}({e.Rule.StockCode})";
+        var alertDetail = $"{e.Rule.TypeDisplayName} 阈值 {e.Rule.Threshold}，当前价 {e.Quote.CurrentPrice}";
         Application.Current.Dispatcher.Invoke(() =>
         {
-            MessageBox.Show(message, "预警通知", MessageBoxButton.OK, MessageBoxImage.Information);
+            AlertNotificationWindow.ShowNotification(stockInfo, alertDetail);
         });
     }
 
