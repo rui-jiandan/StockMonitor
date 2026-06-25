@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Extensions.DependencyInjection;
+using StockMonitor.Logging;
 using StockMonitor.UI.ViewModels;
 
 namespace StockMonitor.UI.Views;
@@ -149,25 +150,94 @@ public partial class MainWindow : Window
         Show();
     }
 
+    /// <summary>
+    /// 打开对话框的通用方法。
+    /// 定位策略：对话框始终显示在屏幕右下角。
+    ///   只有当对话框的位置会与主窗口重叠时，才把对话框偏移到主窗口左侧，避免遮挡。
+    ///   不跟随主窗口移动（主窗口被用户拖到其他地方时，对话框依旧在右下角）。
+    /// </summary>
+    private void ShowDialog<T>() where T : Window
+    {
+        var dialog = ((App)Application.Current).ServiceProvider.GetRequiredService<T>();
+
+        // 先调用 Measure 确保能获取对话框的实际尺寸（否则 ActualWidth/ActualHeight 可能是 0）
+        dialog.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        dialog.Arrange(new Rect(0, 0, dialog.DesiredSize.Width, dialog.DesiredSize.Height));
+
+        double dlgWidth = dialog.Width > 0 ? dialog.Width : dialog.DesiredSize.Width;
+        double dlgHeight = dialog.Height > 0 ? dialog.Height : dialog.DesiredSize.Height;
+
+        // 获取工作区（排除任务栏）
+        var screen = SystemParameters.WorkArea;
+        const int margin = 10;              // 对话框与屏幕边界的间距
+
+        // 默认目标：右下角
+        double targetLeft = screen.Right - dlgWidth - margin;
+        double targetTop = screen.Bottom - dlgHeight - margin;
+
+        // 如果主窗口可见，检查是否会与主窗口重叠；若重叠则移到主窗口左侧
+        if (Visibility == Visibility.Visible && this.IsLoaded)
+        {
+            Rect dlgRect = new Rect(targetLeft, targetTop, dlgWidth, dlgHeight);
+            Rect mainRect = new Rect(Left, Top, ActualWidth, ActualHeight);
+            dlgRect.Inflate(-1, -1);            // 留 1 像素容差，避免紧贴也算重叠
+            mainRect.Inflate(-1, -1);
+
+            if (dlgRect.IntersectsWith(mainRect))
+            {
+                // 重叠了：把对话框移到主窗口左侧，顶部与主窗口对齐
+                double leftOfMain = Left - dlgWidth - margin;
+                if (leftOfMain >= screen.Left + margin)
+                {
+                    // 左侧有空间
+                    targetLeft = leftOfMain;
+                    targetTop = Top;
+                }
+                else
+                {
+                    // 左侧也不够，改放在主窗口上方
+                    double aboveMain = Top - dlgHeight - margin;
+                    if (aboveMain >= screen.Top + margin)
+                    {
+                        targetLeft = Left;
+                        targetTop = aboveMain;
+                    }
+                    else
+                    {
+                        // 上方也不行，改用主窗口右侧（用户手动把主窗口挪到了右下角）
+                        targetLeft = Left + ActualWidth + margin;
+                        targetTop = Top;
+                    }
+                }
+            }
+        }
+
+        // 最终兜底：确保对话框不会跑出工作区
+        if (targetLeft < screen.Left) targetLeft = screen.Left + margin;
+        if (targetTop < screen.Top) targetTop = screen.Top + margin;
+        if (targetLeft + dlgWidth > screen.Right) targetLeft = screen.Right - dlgWidth - margin;
+        if (targetTop + dlgHeight > screen.Bottom) targetTop = screen.Bottom - dlgHeight - margin;
+
+        dialog.Left = targetLeft;
+        dialog.Top = targetTop;
+        dialog.WindowStartupLocation = WindowStartupLocation.Manual;
+        dialog.ShowInTaskbar = true;
+        dialog.ShowDialog();
+    }
+
     private void Menu_PositionEdit(object sender, RoutedEventArgs e)
     {
-        var dialog = ((App)Application.Current).ServiceProvider.GetRequiredService<PositionEditDialog>();
-        dialog.Owner = this;
-        dialog.ShowDialog();
+        ShowDialog<PositionEditDialog>();
     }
 
     private void Menu_AlertManage(object sender, RoutedEventArgs e)
     {
-        var dialog = ((App)Application.Current).ServiceProvider.GetRequiredService<AlertManageDialog>();
-        dialog.Owner = this;
-        dialog.ShowDialog();
+        ShowDialog<AlertManageDialog>();
     }
 
     private void Menu_ConfigEdit(object sender, RoutedEventArgs e)
     {
-        var dialog = ((App)Application.Current).ServiceProvider.GetRequiredService<ConfigEditDialog>();
-        dialog.Owner = this;
-        dialog.ShowDialog();
+        ShowDialog<ConfigEditDialog>();
     }
 
     private void Menu_Refresh(object sender, RoutedEventArgs e)
@@ -177,9 +247,16 @@ public partial class MainWindow : Window
 
     private void Menu_Exit(object sender, RoutedEventArgs e)
     {
-        Hide();
-        _viewModel.Dispose();
-        NotifyIcon.Dispose();
+        try
+        {
+            Hide();
+            _viewModel.Dispose();
+            NotifyIcon.Dispose();
+        }
+        catch (Exception ex)
+        {
+            FileLogger.LogError("退出时清理资源失败", ex);
+        }
         Application.Current.Shutdown();
     }
 }

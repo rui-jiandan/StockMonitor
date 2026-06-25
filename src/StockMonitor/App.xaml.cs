@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using StockMonitor.Core.Models;
 using StockMonitor.Core.Services;
@@ -25,6 +26,10 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // 注册全局异常处理：防止未捕获异常导致程序无声退出
+        DispatcherUnhandledException += OnDispatcherUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += OnAppDomainUnhandledException;
 
         _singleInstanceMutex = new Mutex(true, "StockMonitor_SingleInstance", out bool createdNew);
         if (!createdNew)
@@ -99,6 +104,39 @@ public partial class App : Application
         services.AddTransient<PositionEditDialog>();
         services.AddTransient<ConfigEditDialog>();
         services.AddTransient<AlertManageDialog>();
+    }
+
+    /// <summary>
+    /// WPF UI 线程未捕获异常处理器：记录日志并防止程序立即崩溃退出
+    /// </summary>
+    private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+    {
+        FileLogger.LogError("UI 线程未捕获异常", e.Exception);
+        try
+        {
+            MessageBox.Show(
+                $"程序发生异常：{e.Exception.Message}\n\n详细信息已记录到日志文件。",
+                "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch { /* 忽略消息框自身的异常 */ }
+        // 标记为已处理，让程序可以继续运行
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// 非 UI 线程（例如后台刷新线程）未捕获异常处理器
+    /// </summary>
+    private void OnAppDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        if (e.ExceptionObject is Exception ex)
+        {
+            FileLogger.LogError("后台线程未捕获异常", ex);
+        }
+        else
+        {
+            FileLogger.LogError($"后台线程未捕获异常: {e.ExceptionObject}");
+        }
+        // 注意：非 UI 线程的严重异常通常无法完全恢复，程序可能仍会终止
     }
 
     protected override void OnExit(ExitEventArgs e)
