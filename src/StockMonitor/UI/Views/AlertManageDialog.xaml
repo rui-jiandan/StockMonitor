@@ -9,6 +9,7 @@
         Background="#F5F5F5">
     <Window.Resources>
         <conv:BoolToTextConverter x:Key="BoolToTextConverter"/>
+        <conv:HasPositionToBackgroundConverter x:Key="HasPositionToBackgroundConverter"/>
         <!-- 统一按钮样式 -->
         <Style x:Key="ActionButton" TargetType="Button">
             <Setter Property="Background" Value="#4A90D9"/>
@@ -131,7 +132,29 @@
                            Margin="0,4" Foreground="#555555" FontSize="13"/>
                 <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding StockOptions}"
                           SelectedItem="{Binding SelectedStockOption}" Margin="4,4"
-                          FontSize="13"/>
+                          FontSize="13">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding DisplayText}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasPosition}" Value="True">
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                <Setter Property="Foreground" Value="#2E7D32"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                    <ComboBox.ItemContainerStyle>
+                        <Style TargetType="ComboBoxItem">
+                            <Setter Property="Background" Value="{Binding HasPosition, Converter={StaticResource HasPositionToBackgroundConverter}}"/>
+                        </Style>
+                    </ComboBox.ItemContainerStyle>
+                </ComboBox>
 
                 <TextBlock Grid.Row="1" Grid.Column="0" Text="预警类型:" VerticalAlignment="Center"
                            Margin="0,4" Foreground="#555555" FontSize="13"/>

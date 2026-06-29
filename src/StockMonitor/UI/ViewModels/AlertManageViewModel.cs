@@ -17,16 +17,16 @@ public partial class AlertManageViewModel : ObservableObject
     public ObservableCollection<AlertRule> Rules { get; }
 
     /// <summary>
-    /// 股票选项列表，格式为 "代码 名称"
+    /// 股票选项列表，用于添加预警规则时的选择
     /// </summary>
-    public ObservableCollection<string> StockOptions { get; }
+    public ObservableCollection<StockOptionItem> StockOptions { get; }
 
     /// <summary>
     /// 预警类型中文选项列表
     /// </summary>
     public ObservableCollection<AlertTypeItem> AlertTypeItems { get; }
 
-    [ObservableProperty] private string? _selectedStockOption;
+    [ObservableProperty] private StockOptionItem? _selectedStockOption;
     [ObservableProperty] private AlertTypeItem? _selectedAlertTypeItem;
     [ObservableProperty] private string _thresholdText = string.Empty;
     [ObservableProperty] private bool _isOneTime = true;
@@ -38,9 +38,10 @@ public partial class AlertManageViewModel : ObservableObject
 
         Rules = new ObservableCollection<AlertRule>(alertService.GetRules());
 
-        // 构建 "代码 名称" 格式的股票选项
-        StockOptions = new ObservableCollection<string>(
-            positionService.GetAllPositions().Select(p => $"{p.Code} {p.Name}"));
+        // 构建股票选项，标记当前有持仓的股票（数量 > 0）
+        var allPositions = positionService.GetAllPositions();
+        StockOptions = new ObservableCollection<StockOptionItem>(
+            allPositions.Select(p => new StockOptionItem(p.Code, p.Name, p.GetTotalQuantity() > 0)));
 
         // 构建中文预警类型选项
         AlertTypeItems = new ObservableCollection<AlertTypeItem>
@@ -55,12 +56,11 @@ public partial class AlertManageViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 从选中的股票选项中提取股票代码
+    /// 获取选中股票选项的代码
     /// </summary>
-    private string? GetCodeFromOption(string? option)
+    private string? GetCodeFromOption(StockOptionItem? option)
     {
-        if (string.IsNullOrEmpty(option)) return null;
-        return option.Split(' ')[0];
+        return option?.Code;
     }
 
     [RelayCommand]
@@ -113,4 +113,27 @@ public class AlertTypeItem
     }
 
     public override string ToString() => DisplayName;
+}
+
+/// <summary>
+/// 股票选项，用于 ComboBox 绑定，包含持仓标记用于高亮显示
+/// </summary>
+public class StockOptionItem
+{
+    public string Code { get; }
+    public string Name { get; }
+    public string DisplayText => $"{Code} {Name}";
+    /// <summary>
+    /// 是否已有持仓（包含今日卖出后持仓为0的情况）
+    /// </summary>
+    public bool HasPosition { get; }
+
+    public StockOptionItem(string code, string name, bool hasPosition)
+    {
+        Code = code;
+        Name = name;
+        HasPosition = hasPosition;
+    }
+
+    public override string ToString() => DisplayText;
 }

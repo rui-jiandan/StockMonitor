@@ -1,11 +1,15 @@
 <Window x:Class="StockMonitor.UI.Views.PositionEditDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:StockMonitor.UI.Converters"
         Title="操作" Width="320" Height="400"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         ShowInTaskbar="False"
         Background="#F0F0F0">
+    <Window.Resources>
+        <conv:PositionToBackgroundConverter x:Key="PositionToBackgroundConverter"/>
+    </Window.Resources>
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
@@ -15,6 +19,11 @@
 
         <ListBox Grid.Row="0" ItemsSource="{Binding StockList}" SelectedItem="{Binding SelectedStock}"
                  Height="150">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Background" Value="{Binding Converter={StaticResource PositionToBackgroundConverter}}"/>
+                </Style>
+            </ListBox.ItemContainerStyle>
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <TextBlock>
