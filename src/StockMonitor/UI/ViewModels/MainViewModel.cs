@@ -303,7 +303,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
     private void OnAlertTriggered(object? sender, AlertTriggeredEventArgs e)
     {
         var stockInfo = $"{e.Quote.Name}({e.Rule.StockCode})";
-        var alertDetail = $"{e.Rule.TypeDisplayName} 阈值 {e.Rule.Threshold}，当前价 {e.Quote.CurrentPrice}";
+        var rateText = e.Quote.ChangeRate >= 0 ? $"+{e.Quote.ChangeRate}%" : $"{e.Quote.ChangeRate}%";
+        var alertDetail = $"{e.Rule.TypeDisplayName} 阈值 {e.Rule.Threshold}\n最新价 {e.Quote.CurrentPrice}  涨幅 {rateText}";
         Application.Current.Dispatcher.Invoke(() =>
         {
             AlertNotificationWindow.ShowNotification(stockInfo, alertDetail);

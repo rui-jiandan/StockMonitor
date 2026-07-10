@@ -12,6 +12,12 @@ public class StockQuote
     public decimal YestClose { get; init; }
     public decimal HighPrice { get; init; }
     public decimal LowPrice { get; init; }
+
+    /// <summary>
+    /// 是否停牌，停牌股票不参与预警判断
+    /// </summary>
+    public bool IsSuspended { get; init; }
+
     public decimal Change => YestClose != 0 ? CurrentPrice - YestClose : 0;
     public decimal ChangeRate => YestClose != 0 ? Math.Round(Change / YestClose * 100, 2) : 0;
 }

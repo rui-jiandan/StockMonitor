@@ -60,6 +60,9 @@ public class TencentDataProvider : IStockDataProvider
                 if (!decimal.TryParse(parts[33], NumberStyles.Any, CultureInfo.InvariantCulture, out var highPrice)) continue;
                 if (!decimal.TryParse(parts[34], NumberStyles.Any, CultureInfo.InvariantCulture, out var lowPrice)) continue;
 
+                // 停牌判断：有昨收价但现价和开盘价均为0，视为停牌
+                bool isSuspended = yestClose > 0 && currentPrice == 0 && openPrice == 0;
+
                 quotes.Add(new StockQuote
                 {
                     Code = code,
@@ -68,7 +71,8 @@ public class TencentDataProvider : IStockDataProvider
                     YestClose = yestClose,
                     CurrentPrice = currentPrice,
                     HighPrice = highPrice,
-                    LowPrice = lowPrice
+                    LowPrice = lowPrice,
+                    IsSuspended = isSuspended
                 });
             }
 
