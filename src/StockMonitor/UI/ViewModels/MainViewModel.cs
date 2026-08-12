@@ -189,7 +189,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
         var name = !string.IsNullOrEmpty(position?.Name) ? position.Name : (quote?.Name ?? string.Empty);
         var quantity = position?.GetTotalQuantity() ?? 0;
         var avgCost = position?.AvgCostPrice ?? 0m;
-        var hasPosition = quantity > 0;
+        bool hasTodayTrades = position?.TodayTrades.Any(t => t.Time.Date == DateTime.Today) == true;
+        var hasPosition = quantity > 0 || hasTodayTrades;
 
         string price = "--";
         string change = "--";
@@ -204,8 +205,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
             rate = quote.ChangeRate >= 0 ? $"+{quote.ChangeRate:G}%" : $"{quote.ChangeRate:G}%";
             color = quote.Change > 0 ? "Red" : quote.Change < 0 ? "#00FF00" : "White";
 
-            bool hasTodayTrades = position?.TodayTrades.Any(t => t.Time.Date == DateTime.Today) == true;
-            if (hasPosition || hasTodayTrades)
+            if (hasPosition)
             {
                 var (_, _, totalPnL) = PnLCalculator.CalculateTodayPnL(position!, quote);
                 pnl = totalPnL >= 0 ? $"+{totalPnL:F0}" : $"{totalPnL:F0}";
