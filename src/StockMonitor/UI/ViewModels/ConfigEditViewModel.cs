@@ -71,6 +71,10 @@ public partial class ConfigEditViewModel : ObservableObject
     {
         new() { Tag = "#money", Description = "今日总盈亏" },
         new() { Tag = "#rate", Description = "今日盈亏比例" },
+        new() { Tag = "#value", Description = "总市值" },
+        new() { Tag = "#count", Description = "持仓只数" },
+        new() { Tag = "#realized", Description = "已实现盈亏" },
+        new() { Tag = "#time", Description = "当前时间" },
     };
 
     /// <summary>
@@ -134,6 +138,10 @@ public partial class ConfigEditViewModel : ObservableObject
         var sampleCost = "43.267";
         var sampleMoney = "+126.50";
         var sampleRateSum = "0.32%";
+        var sampleValue = "1,250,300";
+        var sampleCount = "5";
+        var sampleRealized = "+45.20";
+        var sampleTime = DateTime.Now.ToString("HH:mm:ss");
 
         var stockPreview = ShowFormat
             .Replace("#name", sampleName)
@@ -147,7 +155,11 @@ public partial class ConfigEditViewModel : ObservableObject
 
         var todayPreview = ShowTodaySumFormat
             .Replace("#money", sampleMoney)
-            .Replace("#rate", sampleRateSum);
+            .Replace("#rate", sampleRateSum)
+            .Replace("#value", sampleValue)
+            .Replace("#count", sampleCount)
+            .Replace("#realized", sampleRealized)
+            .Replace("#time", sampleTime);
 
         PreviewText = $"[汇总] {todayPreview}\n{stockPreview}";
     }

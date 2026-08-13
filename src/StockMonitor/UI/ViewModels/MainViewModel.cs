@@ -267,23 +267,29 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// 更新今日盈亏汇总行，计算总盈亏金额和比例
+    /// 更新今日盈亏汇总行，计算总盈亏金额、比例、市值、持仓只数、已实现盈亏等
+    /// 支持的通配符：#money 今日总盈亏、#rate 盈亏比例、#value 总市值、
+    /// #count 持仓只数、#realized 已实现盈亏、#time 当前时间
     /// </summary>
     private void UpdateTodaySummary(IReadOnlyList<StockPosition> positions, List<StockQuote> quotes)
     {
         var quoteDict = quotes.ToDictionary(q => q.Code);
         decimal totalPnL = 0m;
+        decimal totalRealized = 0m;
         decimal totalMarketValue = 0m;
+        int holdCount = 0;
 
         foreach (var pos in positions)
         {
             if (!quoteDict.TryGetValue(pos.Code, out var quote)) continue;
 
-            var (_, _, pnl) = PnLCalculator.CalculateTodayPnL(pos, quote);
+            var (realized, _, pnl) = PnLCalculator.CalculateTodayPnL(pos, quote);
             totalPnL += pnl;
+            totalRealized += realized;
 
             int qty = pos.GetTotalQuantity();
             totalMarketValue += quote.CurrentPrice * qty;
+            if (qty > 0) holdCount++;
         }
 
         var rate = totalMarketValue > 0 ? totalPnL / totalMarketValue * 100 : 0m;
@@ -291,7 +297,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
         var format = _config.ShowTodaySumFormat;
         var summary = format
             .Replace("#money", $"{totalPnL:+#,#0;-#,#0;0}")
-            .Replace("#rate", $"{rate:+0.00;-0.00;0.00}");
+            .Replace("#rate", $"{rate:+0.00;-0.00;0.00}")
+            .Replace("#value", $"{totalMarketValue:#,#0}")
+            .Replace("#count", $"{holdCount}")
+            .Replace("#realized", $"{totalRealized:+#,#0;-#,#0;0}")
+            .Replace("#time", DateTime.Now.ToString("HH:mm:ss"));
 
         TodaySummary = summary;
         SummaryColor = totalPnL > 0 ? "Red" : totalPnL < 0 ? "#00FF00" : "White";
