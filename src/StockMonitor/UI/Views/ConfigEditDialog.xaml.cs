@@ -25,6 +25,11 @@ public partial class ConfigEditDialog : Window
         _viewModel.ActiveFormatField = "ShowTodaySumFormat";
     }
 
+    private void OrderByBox_GotFocus(object sender, RoutedEventArgs e)
+    {
+        _viewModel.ActiveFormatField = "OrderBy";
+    }
+
     /// <summary>
     /// 占位符标签点击事件，在对应 TextBox 光标位置插入占位符文本
     /// </summary>
@@ -33,9 +38,12 @@ public partial class ConfigEditDialog : Window
         if (sender is not FrameworkElement element) return;
         if (element.DataContext is not PlaceholderItem item) return;
 
-        var targetBox = _viewModel.ActiveFormatField == "ShowTodaySumFormat"
-            ? TodaySumFormatBox
-            : ShowFormatBox;
+        var targetBox = _viewModel.ActiveFormatField switch
+        {
+            "ShowTodaySumFormat" => TodaySumFormatBox,
+            "OrderBy" => OrderByBox,
+            _ => ShowFormatBox
+        };
 
         var caretIndex = targetBox.CaretIndex;
         var text = targetBox.Text;

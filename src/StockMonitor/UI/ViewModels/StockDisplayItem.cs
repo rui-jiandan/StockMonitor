@@ -15,4 +15,17 @@ public partial class StockDisplayItem : ObservableObject
     [ObservableProperty] private string _pnlText = string.Empty;
     [ObservableProperty] private string _priceColor = "White";
     [ObservableProperty] private bool _hasPosition;
+
+    /// <summary>
+    /// 股票名称（原始名称，供排序使用），与显示格式化后的 DisplayName 区分
+    /// </summary>
+    [ObservableProperty] private string _name = string.Empty;
+
+    // 以下数值字段专供排序使用，不参与显示格式化
+    [ObservableProperty] private decimal _currentPrice;
+    [ObservableProperty] private decimal _change;
+    [ObservableProperty] private decimal _changeRate;
+    [ObservableProperty] private decimal _pnl;
+    [ObservableProperty] private int _quantity;
+    [ObservableProperty] private decimal _avgCost;
 }

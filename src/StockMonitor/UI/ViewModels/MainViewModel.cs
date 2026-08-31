@@ -196,6 +196,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         string change = "--";
         string rate = "--";
         string pnl = string.Empty;
+        decimal totalPnL = 0m;
         string color = "White";
 
         if (quote != null)
@@ -207,7 +208,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
             if (hasPosition)
             {
-                var (_, _, totalPnL) = PnLCalculator.CalculateTodayPnL(position!, quote);
+                (_, _, totalPnL) = PnLCalculator.CalculateTodayPnL(position!, quote);
                 pnl = totalPnL >= 0 ? $"+{totalPnL:F0}" : $"{totalPnL:F0}";
             }
         }
@@ -217,13 +218,20 @@ public partial class MainViewModel : ObservableObject, IDisposable
         return new StockDisplayItem
         {
             Code = code,
+            Name = name,
             DisplayName = displayName,
             PriceText = price,
             ChangeText = change,
             ChangeRateText = rate,
             PnlText = pnl,
             PriceColor = color,
-            HasPosition = hasPosition
+            HasPosition = hasPosition,
+            CurrentPrice = quote?.CurrentPrice ?? 0m,
+            Change = quote?.Change ?? 0m,
+            ChangeRate = quote?.ChangeRate ?? 0m,
+            Pnl = totalPnL,
+            Quantity = quantity,
+            AvgCost = avgCost
         };
     }
 
@@ -245,26 +253,56 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// 按配置的排序规则对显示项排序
+    /// 按配置的排序规则对显示项排序，支持多字段，规则形如 "havepos desc,makemoney desc"
     /// </summary>
     private IEnumerable<StockDisplayItem> OrderDisplayItems(List<StockDisplayItem> items)
     {
-        var orderBy = _config.OrderBy?.ToLowerInvariant() ?? "havepos desc,makemoney desc";
-        IOrderedEnumerable<StockDisplayItem> ordered;
+        var orderBy = _config.OrderBy;
+        if (string.IsNullOrWhiteSpace(orderBy))
+            return items.OrderBy(i => i.Code);
 
-        if (orderBy.Contains("havepos"))
-        {
-            ordered = orderBy.Contains("desc")
-                ? items.OrderByDescending(i => i.HasPosition)
-                : items.OrderBy(i => i.HasPosition);
-        }
-        else
-        {
-            ordered = items.OrderBy(i => i.Code);
-        }
+        var rules = orderBy
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(part =>
+            {
+                var tokens = part.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                var field = tokens.Length > 0 ? tokens[0].ToLowerInvariant() : string.Empty;
+                var desc = tokens.Length > 1 && tokens[1].Equals("desc", StringComparison.OrdinalIgnoreCase);
+                return (field, desc);
+            })
+            .Where(r => !string.IsNullOrEmpty(r.field))
+            .ToList();
 
-        return ordered.ThenBy(i => i.Code);
+        if (rules.Count == 0)
+            return items.OrderBy(i => i.Code);
+
+        IOrderedEnumerable<StockDisplayItem>? ordered = null;
+        foreach (var (field, desc) in rules)
+        {
+            var selector = GetSortKeySelector(field);
+            ordered = ordered == null
+                ? (desc ? items.OrderByDescending(selector) : items.OrderBy(selector))
+                : (desc ? ordered.ThenByDescending(selector) : ordered.ThenBy(selector));
+        }
+        return ordered!;
     }
+
+    /// <summary>
+    /// 将排序字段名映射为对应的可比较键选择器，未知字段回退到股票代码
+    /// </summary>
+    private static Func<StockDisplayItem, IComparable> GetSortKeySelector(string field) => field switch
+    {
+        "havepos" => i => i.HasPosition,
+        "makemoney" => i => i.Pnl,
+        "code" => i => i.Code,
+        "name" => i => i.Name,
+        "price" => i => i.CurrentPrice,
+        "change" => i => i.Change,
+        "rate" => i => i.ChangeRate,
+        "quantity" => i => i.Quantity,
+        "cost" => i => i.AvgCost,
+        _ => i => i.Code
+    };
 
     /// <summary>
     /// 更新今日盈亏汇总行，计算总盈亏金额、比例、市值、持仓只数、已实现盈亏等

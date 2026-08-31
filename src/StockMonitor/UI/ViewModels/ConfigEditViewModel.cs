@@ -78,6 +78,25 @@ public partial class ConfigEditViewModel : ObservableObject
     };
 
     /// <summary>
+    /// 排序方式可用占位符列表，包含可排序字段与排序方向关键字
+    /// 写法示例：havepos desc,makemoney desc（多个规则用英文逗号分隔）
+    /// </summary>
+    public List<PlaceholderItem> OrderByPlaceholders { get; } = new()
+    {
+        new() { Tag = "havepos", Description = "是否有持仓" },
+        new() { Tag = "makemoney", Description = "盈亏金额" },
+        new() { Tag = "code", Description = "股票代码" },
+        new() { Tag = "name", Description = "股票名称" },
+        new() { Tag = "price", Description = "当前价格" },
+        new() { Tag = "change", Description = "涨跌额" },
+        new() { Tag = "rate", Description = "涨跌幅" },
+        new() { Tag = "quantity", Description = "持仓数量" },
+        new() { Tag = "cost", Description = "成本价" },
+        new() { Tag = "asc", Description = "升序" },
+        new() { Tag = "desc", Description = "降序" },
+    };
+
+    /// <summary>
     /// 占位符插入事件，通知 View 在对应 TextBox 光标位置插入文本
     /// </summary>
     public event Action<string>? PlaceholderInsertRequested;

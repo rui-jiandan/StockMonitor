@@ -71,7 +71,28 @@
                 <TextBox Text="{Binding RefreshTime}" />
 
                 <TextBlock Text="排序方式:" Margin="0,8,0,4" FontWeight="Bold"/>
-                <TextBox Text="{Binding OrderBy}" />
+                <TextBox x:Name="OrderByBox" Text="{Binding OrderBy}"
+                         GotFocus="OrderByBox_GotFocus"/>
+                <TextBlock Text="可用占位符（点击插入，格式: 字段 方向,字段 方向）:" Margin="0,4,0,2" FontSize="10" Foreground="Gray"/>
+                <ItemsControl ItemsSource="{Binding OrderByPlaceholders}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="#E0E0E0" CornerRadius="3" Margin="2,1" Padding="4,2"
+                                    Cursor="Hand" MouseDown="Placeholder_MouseDown">
+                                <TextBlock FontSize="10">
+                                    <Run Text="{Binding Tag, Mode=OneWay}" FontWeight="Bold"/>
+                                    <Run Text=" "/>
+                                    <Run Text="{Binding Description, Mode=OneWay}" Foreground="Gray"/>
+                                </TextBlock>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
                 <TextBlock Text="最大可见股票数:" Margin="0,8,0,4" FontWeight="Bold"/>
                 <TextBox Text="{Binding MaxVisibleStocks}" />
