@@ -77,7 +77,20 @@ public partial class MainWindow : Window
                 _isFirstShow = false;
             }
             Show();
+            ScheduleMeasureIfNeeded();
         }
+    }
+
+    /// <summary>
+    /// 若尚未测量行高，则在窗口显示后主动安排一次测量。
+    /// 场景：数据刷新时窗口处于隐藏状态（WPF 不对隐藏窗口做布局，ActualHeight 为 0），
+    /// 导致 MaxHeight 未被设置，首次显示会撑满全部股票；此处补一次测量以立即生效。
+    /// </summary>
+    private void ScheduleMeasureIfNeeded()
+    {
+        if (_hasMeasuredItemHeight) return;
+
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, TryMeasureAndApplyMaxHeight);
     }
 
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -94,37 +107,42 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// 股票数据更新后，延迟测量首项高度并动态设置 MaxHeight
+    /// 股票数据更新后，若尚未测量行高则安排一次测量（窗口可见时测量才会成功）
     /// </summary>
     private void OnStocksUpdated()
     {
+        ScheduleMeasureIfNeeded();
+    }
+
+    /// <summary>
+    /// 测量首行股票高度与摘要高度，据此设置窗口 MaxHeight = 摘要高 + 首行高 × 最大可见数。
+    /// 注意：窗口隐藏时 WPF 不做布局、ActualHeight 为 0，测量会失败，需等窗口可见后再触发。
+    /// </summary>
+    private void TryMeasureAndApplyMaxHeight()
+    {
         if (_hasMeasuredItemHeight) return;
+        if (StockItemsControl.Items.Count == 0) return;
 
-        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
-        {
-            if (StockItemsControl.Items.Count == 0) return;
+        var container = StockItemsControl.ItemContainerGenerator.ContainerFromIndex(0);
+        if (container is not FrameworkElement element) return;
 
-            var container = StockItemsControl.ItemContainerGenerator.ContainerFromIndex(0);
-            if (container is not FrameworkElement element) return;
+        double itemHeight = element.ActualHeight + element.Margin.Top + element.Margin.Bottom;
+        if (itemHeight <= 0) return;
 
-            double itemHeight = element.ActualHeight + element.Margin.Top + element.Margin.Bottom;
-            if (itemHeight <= 0) return;
+        double summaryHeight = SummaryText.ActualHeight + SummaryText.Margin.Top + SummaryText.Margin.Bottom;
 
-            double summaryHeight = SummaryText.ActualHeight + SummaryText.Margin.Top + SummaryText.Margin.Bottom;
+        double borderPadding = 16;
+        double maxContentHeight = summaryHeight + itemHeight * _viewModel.MaxVisibleStocks;
+        double calculatedMaxHeight = maxContentHeight + borderPadding;
 
-            double borderPadding = 16;
-            double maxContentHeight = summaryHeight + itemHeight * _viewModel.MaxVisibleStocks;
-            double calculatedMaxHeight = maxContentHeight + borderPadding;
+        var source = PresentationSource.FromVisual(this);
+        var dpiScale = source?.CompositionTarget?.TransformFromDevice.M22 ?? 1.0;
+        double screenMaxHeight = SystemParameters.WorkArea.Height * 0.85 / dpiScale;
 
-            var source = PresentationSource.FromVisual(this);
-            var dpiScale = source?.CompositionTarget?.TransformFromDevice.M22 ?? 1.0;
-            double screenMaxHeight = SystemParameters.WorkArea.Height * 0.85 / dpiScale;
+        MaxHeight = Math.Min(calculatedMaxHeight, screenMaxHeight);
+        PositionWindowBottomRight();
 
-            MaxHeight = Math.Min(calculatedMaxHeight, screenMaxHeight);
-            PositionWindowBottomRight();
-
-            _hasMeasuredItemHeight = true;
-        });
+        _hasMeasuredItemHeight = true;
     }
 
     /// <summary>
@@ -148,6 +166,7 @@ public partial class MainWindow : Window
             _isFirstShow = false;
         }
         Show();
+        ScheduleMeasureIfNeeded();
     }
 
     /// <summary>
