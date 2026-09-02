@@ -17,6 +17,11 @@ public partial class StockDisplayItem : ObservableObject
     [ObservableProperty] private bool _hasPosition;
 
     /// <summary>
+    /// 是否特别关注（主界面显示 ★ 标记，可用于排序置顶）
+    /// </summary>
+    [ObservableProperty] private bool _isWatched;
+
+    /// <summary>
     /// 股票名称（原始名称，供排序使用），与显示格式化后的 DisplayName 区分
     /// </summary>
     [ObservableProperty] private string _name = string.Empty;

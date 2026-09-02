@@ -30,6 +30,13 @@ public interface IPositionService
     void UpdatePosition(string code, int quantity, decimal avgCostPrice, string? name = null);
     void AddStock(string code, string? name = null);
     void RemoveStock(string code);
+
+    /// <summary>
+    /// 设置股票的特别关注状态并持久化
+    /// </summary>
+    /// <param name="code">股票代码</param>
+    /// <param name="isWatched">是否特别关注</param>
+    void SetWatched(string code, bool isWatched);
     void MergeDayTrades(bool mergeAll = false);
     event EventHandler<PositionChangedEventArgs>? PositionChanged;
 }

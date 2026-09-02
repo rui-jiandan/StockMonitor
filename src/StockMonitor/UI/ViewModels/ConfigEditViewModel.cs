@@ -83,6 +83,7 @@ public partial class ConfigEditViewModel : ObservableObject
     /// </summary>
     public List<PlaceholderItem> OrderByPlaceholders { get; } = new()
     {
+        new() { Tag = "watch", Description = "是否特别关注" },
         new() { Tag = "havepos", Description = "是否有持仓" },
         new() { Tag = "makemoney", Description = "盈亏金额" },
         new() { Tag = "code", Description = "股票代码" },

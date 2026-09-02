@@ -116,6 +116,20 @@ public class PositionService : IPositionService
     }
 
     /// <summary>
+    /// 设置股票的特别关注状态并持久化
+    /// </summary>
+    /// <param name="code">股票代码</param>
+    /// <param name="isWatched">是否特别关注</param>
+    public void SetWatched(string code, bool isWatched)
+    {
+        var position = GetPosition(code)
+            ?? throw new InvalidOperationException($"股票 {code} 不存在");
+
+        position.IsWatched = isWatched;
+        SaveAndNotify(code);
+    }
+
+    /// <summary>
     /// 合并交易到持仓。默认只合并非今天的交易（启动时调用），<paramref name="mergeAll"/> 为 true 时合并全部（退出时调用）。
     /// </summary>
     /// <param name="mergeAll">是否合并所有交易，包括今天的。退出时传 true 做日终结算</param>

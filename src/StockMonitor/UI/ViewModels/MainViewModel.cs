@@ -215,6 +215,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         var displayName = FormatDisplayName(code, name, price, change, rate, pnl, quantity.ToString(), avgCost.ToString("G"));
 
+        // 特别关注的股票在名称前附加 ★ 标记，便于在主界面一眼识别
+        var isWatched = position?.IsWatched == true;
+        if (isWatched)
+            displayName = "★" + displayName;
+
         return new StockDisplayItem
         {
             Code = code,
@@ -226,6 +231,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
             PnlText = pnl,
             PriceColor = color,
             HasPosition = hasPosition,
+            IsWatched = isWatched,
             CurrentPrice = quote?.CurrentPrice ?? 0m,
             Change = quote?.Change ?? 0m,
             ChangeRate = quote?.ChangeRate ?? 0m,
@@ -292,6 +298,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     /// </summary>
     private static Func<StockDisplayItem, IComparable> GetSortKeySelector(string field) => field switch
     {
+        "watch" => i => i.IsWatched,
         "havepos" => i => i.HasPosition,
         "makemoney" => i => i.Pnl,
         "code" => i => i.Code,

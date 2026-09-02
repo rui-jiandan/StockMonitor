@@ -9,6 +9,7 @@
         Background="#F0F0F0">
     <Window.Resources>
         <conv:PositionToBackgroundConverter x:Key="PositionToBackgroundConverter"/>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
     </Window.Resources>
     <Grid Margin="10">
         <Grid.RowDefinitions>
@@ -26,12 +27,16 @@
             </ListBox.ItemContainerStyle>
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <TextBlock>
-                        <Run Text="{Binding Name, Mode=OneWay}"/>
-                        <Run Text="("/>
-                        <Run Text="{Binding Code, Mode=OneWay}"/>
-                        <Run Text=")"/>
-                    </TextBlock>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="★" Foreground="Orange" FontWeight="Bold"
+                                   Visibility="{Binding IsWatched, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        <TextBlock>
+                            <Run Text="{Binding Name, Mode=OneWay}"/>
+                            <Run Text="("/>
+                            <Run Text="{Binding Code, Mode=OneWay}"/>
+                            <Run Text=")"/>
+                        </TextBlock>
+                    </StackPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
@@ -69,6 +74,7 @@
             <Button Content="编辑" Command="{Binding EditPositionCommand}" Margin="2"/>
             <Button Content="删除" Command="{Binding DeletePositionCommand}" Margin="2"/>
             <Button Content="新增股票" Command="{Binding AddNewStockCommand}" Margin="2"/>
+            <Button Content="{Binding WatchButtonText}" Command="{Binding ToggleWatchCommand}" Margin="2"/>
         </UniformGrid>
     </Grid>
 </Window>
